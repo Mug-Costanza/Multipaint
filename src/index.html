@@ -307,7 +307,7 @@
         function startDrawing(e) {
             e.preventDefault(); // Prevent default touch event behavior
             const rect = canvas.getBoundingClientRect();
-            [lastX, lastY] = [e.offsetX - rect.left, e.offsetY - rect.top];
+            [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
             //drawing = true;
