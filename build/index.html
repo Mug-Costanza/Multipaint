@@ -306,11 +306,13 @@
 
         function startDrawing(e) {
             const rect = canvas.getBoundingClientRect();
-            [lastX, lastY] = [e.offsetX, e.offsetY];
+            [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
             drawing = true;
 
+            //[lastX, lastY] = [x, y];
+            
             // Emit drawing start to others in the room
             sendMessage('drawingStart', { startX: lastX, startY: lastY });
         }
@@ -320,7 +322,8 @@
             
             e.preventDefault()
             
-            const [x, y] = [e.offsetX, e.offsetY];
+            const rect = canvas.getBoundingClientRect();
+            const [x, y] = [e.clientX - rect.left, e.clientY - rect.top];
             
             // Draw a line from the last position to the current position
             ctx.strokeStyle = color;
