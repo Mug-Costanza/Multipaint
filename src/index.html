@@ -316,7 +316,8 @@
         }
         
         function draw(e) {
-            if (!drawing) return;
+            e.preventDefault(); // Prevent default touch event behavior
+            //if (!drawing) return;
             const rect = canvas.getBoundingClientRect();
             const [x, y] = [e.clientX - rect.left, e.clientY - rect.top];
 
