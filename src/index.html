@@ -323,8 +323,6 @@
             // Draw a line from the last position to the current position
             ctx.strokeStyle = color;
             ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
             ctx.lineTo(x, y);
             ctx.stroke();
 
@@ -334,6 +332,28 @@
             // Emit drawing data to others in the room
             sendMessage('drawing', { x, y, color });
         }
+        
+        /*
+        // Function to handle touch move
+        function handleTouchMove(e) {
+            e.preventDefault(); // Prevent default touch event behavior
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect(); // Define rect here
+            const [x, y] = [touch.clientX - rect.left, touch.clientY - rect.top];
+
+            // Draw a line from the last position to the current position
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.lineTo(x, y);
+            ctx.stroke();
+
+            // Update the last position
+            [touchStartX, touchStartY] = [x, y];
+
+            // Emit drawing data to others in the room
+            sendMessage('drawing', { x, y, color });
+        }
+         */
 
         function stopDrawing() {
             drawing = false;
