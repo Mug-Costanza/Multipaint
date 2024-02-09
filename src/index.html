@@ -314,10 +314,11 @@
             // Emit drawing start to others in the room
             sendMessage('drawingStart', { startX: lastX, startY: lastY });
         }
-
+        
         function draw(e) {
             if (!drawing) return;
-            const [x, y] = [e.offsetX, e.offsetY];
+            const rect = canvas.getBoundingClientRect();
+            const [x, y] = [e.clientX - rect.left, e.clientY - rect.top];
 
             // Draw a line from the last position to the current position
             ctx.strokeStyle = color;
