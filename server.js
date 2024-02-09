@@ -1,17 +1,12 @@
 const express = require('express');
 const http = require('http');
-const WebSocket = require('ws');
 const socketIo = require('socket.io');
 const path = require('path');
 const bodyParser = require('body-parser');
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
 const io = socketIo(server);
-
-// Add the Redis adapter configuration here
-io.adapter(require('socket.io-redis')({ url: process.env.REDIS_URL }));
 
 app.use(bodyParser.json());
 
