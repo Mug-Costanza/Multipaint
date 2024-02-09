@@ -18,8 +18,8 @@
   },
   "scripts": {
     "test": "react-scripts test",
-    "build": "react-scripts build && node server.js",
-    "start": "concurrently \"npm-run-all -p backend-start start-js\"",
+    "build": "react-scripts build",
+    "start": "node server.js"",
     "eject": "react-scripts eject",
     "serve": "serve -s build && node server.js",
     "client": "npm start --prefix client",
