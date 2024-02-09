@@ -106,13 +106,12 @@ io.on('connection', (socket) => {
     });
     
     socket.on('drawingStart', (data) => {
-        if (!drawingStates[socket.id] || !drawingStates[socket.id][data.room] || !drawingStates[socket.id][data.room].drawing) {
-            drawingStates[socket.id] = drawingStates[socket.id] || {};
-            drawingStates[socket.id][data.room] = {
-            drawing: true,
-            lastX: data.startX,
-            lastY: data.startY,
-            };
+            if (!drawingStates[data.room] || !drawingStates[data.room].drawing) {
+                drawingStates[data.room] = {
+                    drawing: true,
+                    lastX: data.startX,
+                    lastY: data.startY,
+                };
             
             // Store drawing data in roomCanvases including start color
             roomCanvases[data.room] = roomCanvases[data.room] || [];
@@ -130,33 +129,33 @@ io.on('connection', (socket) => {
     });
 
     socket.on('drawing', (data) => {
-            if (drawingStates[socket.id] && drawingStates[socket.id][data.room] && drawingStates[socket.id][data.room].drawing) {
-                drawingStates[socket.id][data.room] = {
-                    drawing: true,
-                    lastX: data.x,
-                    lastY: data.y,
-                };
-                io.to(data.room).emit('drawing', data);
-
-                // Store drawing data in roomCanvases
-                roomCanvases[data.room] = roomCanvases[data.room] || [];
-                roomCanvases[data.room].push({ type: 'drawing', data });
-            }
-
+        if (drawingStates[data.room] && drawingStates[data.room].drawing) {
+            drawingStates[data.room] = {
+            drawing: true,
+            lastX: data.x,
+            lastY: data.y,
+            };
+            io.to(data.room).emit('drawing', data);
+            
+            // Store drawing data in roomCanvases
+            roomCanvases[data.room] = roomCanvases[data.room] || [];
+            roomCanvases[data.room].push({ type: 'drawing', data });
+        }
+        
             io.emit('activeRooms', { activeRooms });
         });
 
     socket.on('drawingEnd', (data) => {
-        if (drawingStates[socket.id] && drawingStates[socket.id][data.room] && drawingStates[socket.id][data.room].drawing) {
-            drawingStates[socket.id][data.room].drawing = false;
+        if (drawingStates[data.room] && drawingStates[data.room].drawing) {
+            drawingStates[data.room].drawing = false;
             io.to(data.room).emit('drawingEnd', data);
-
+            
             // Store drawing data in roomCanvases
             roomCanvases[data.room] = roomCanvases[data.room] || [];
             roomCanvases[data.room].push({ type: 'drawingEnd', data });
 
             // Clear the drawing data for the specific user and room
-            drawingStates[socket.id][data.room] = {
+            drawingStates[data.room] = {
                 drawing: false,
                 lastX: 0,
                 lastY: 0,

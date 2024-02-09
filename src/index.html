@@ -26,6 +26,7 @@
         
         #canvas {
             display: none;
+            background-color: #121212;
         }
 
         #content {
@@ -121,7 +122,7 @@
 
 </head>
 <body>
-    <canvas id="canvas" width="3000" height="3000"></canvas>
+    <canvas id="canvas" style="background-color: #121212;" width="3000" height="3000"></canvas>
     
     <div id="landing" style="text-align: center; margin-top: 50px;">
         <button id="donateButton" style="position: fixed; top: 10px; right: 10px; background-color: #6772e5; color: #fff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Donate</button>
@@ -493,15 +494,31 @@
             }
         }
         
-            //Function to save the canvas image
-            const saveCanvasImage = () => {
-                const canvas = document.getElementById('canvas');
-                const dataUrl = canvas.toDataURL(); // Get the data URL of the canvas image
-                const a = document.createElement('a');
-                a.href = dataUrl;
-                a.download = 'image.png';
-                a.click();
-            };
+        // Function to save the canvas image
+        const saveCanvasImage = () => {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Create a new canvas with a black background
+            const newCanvas = document.createElement('canvas');
+            newCanvas.width = canvas.width;
+            newCanvas.height = canvas.height;
+            const newCtx = newCanvas.getContext('2d');
+            newCtx.fillStyle = '#000000'; // Set the fill color to black
+            newCtx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+
+            // Draw the existing canvas content onto the new canvas
+            newCtx.drawImage(canvas, 0, 0);
+
+            // Get the data URL of the new canvas image
+            const dataUrl = newCanvas.toDataURL();
+
+            // Create a temporary link element to trigger the download
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = 'image.png';
+            a.click();
+        };
         
         function generateAndJoinRoom() {
             const generatedRoomCode = generateRandomRoomCode();
