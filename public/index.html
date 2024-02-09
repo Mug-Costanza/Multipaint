@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Multipaint</title>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
     <style>
         body {
@@ -76,12 +78,13 @@
         }
         
         #messages {
-            margin: 10px 0 0 10px; /* Adjust margin for top and left */
+            height: 30vh; /* Set a fixed height for the messages container */
+            overflow-y: auto; /* Enable vertical scrollbar for the messages */
+            margin: 10px 0 0 10px;
             padding: 0;
             list-style-type: none;
-            overflow-y: auto; /* Enable vertical scrollbar for the messages */
             color: #ffffff; /* Set text color for messages */
-            position: fixed; /* Add this line to fix its position */
+            position: fixed;
         }
 
         #form {
@@ -116,7 +119,6 @@
         #messages li span.default-username {
             color: #ffffff;
         }
-        
     </style>
 
 </head>
@@ -126,12 +128,12 @@
     <canvas id="canvas" width="3000" height="3000"></canvas>
     
     <div id="landing" style="text-align: center; margin-top: 50px;">
-        <button id="donateButton" style="position: fixed; top: 10px; right: 10px; background-color: #6772e5; color: #fff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Donate</button>
+        <a href="https://www.buymeacoffee.com/multipaint"><button id="donateButton" style="position: fixed; top: 10px; right: 10px; background-color: #6772e5; color: #fff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Donate</button></a>
+        <a href="/privacy"><button id="privacyButton" style="position: fixed; top: 50px; right: 10px; background-color: #6772e5; color: #fff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Privacy Policy</button></a>
         <h1 style="font-size: 2.5em; margin-bottom: 10px; display: flex; justify-content: center;">
             <form id="form" action="">
                 <div id="card-element"></div>
                 <div id="card-errors" role="alert"></div>
-                <input id="m" autocomplete="off" disabled /><button disabled>Send</button>
             </form>
             <span style="color: #FF0000;">M</span>
             <span style="color: #FF7F00;">u</span>
@@ -164,6 +166,7 @@
     </div>
 
     <div id="activeUsersCount" style="position: fixed; top: 10px; left: 10px; color: #ffffff;"></div>
+    
     <ul id="messages" style="flex: 1; display: flex; flex-direction: column; align-items: flex-start; margin-left: 10px; left: 0%; top: 10%;"></ul>
     
     <div id="clearCanvasContainer" style="position: fixed; top: 10px; left: 50%; transform: translateX(-50%);">
@@ -174,13 +177,12 @@
     <button style="position: fixed; top: 50px; right: 10px; background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;" onclick="window.location.href='/'">Back to Menu</button>
     
     <form id="form" action="">
-        <input id="m" autocomplete="off" disabled /><button disabled>Send</button>
+        <input id="m" autocomplete="off" /><button>Send</button>
     </form>
     </div>
-
+    
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-    <script src="https://js.stripe.com/v3/"></script>
 
     <script>
         const socket = io();
@@ -304,24 +306,28 @@
 
         function startDrawing(e) {
             const rect = canvas.getBoundingClientRect();
-            [lastX, lastY] = [e.offsetX, e.offsetY];
+            [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
             drawing = true;
 
+            //[lastX, lastY] = [x, y];
+            
             // Emit drawing start to others in the room
             sendMessage('drawingStart', { startX: lastX, startY: lastY });
         }
 
         function draw(e) {
             if (!drawing) return;
-            const [x, y] = [e.offsetX, e.offsetY];
-
+            
+            e.preventDefault()
+            
+            const rect = canvas.getBoundingClientRect();
+            const [x, y] = [e.clientX - rect.left, e.clientY - rect.top];
+            
             // Draw a line from the last position to the current position
             ctx.strokeStyle = color;
             ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
             ctx.lineTo(x, y);
             ctx.stroke();
 
@@ -333,6 +339,7 @@
         }
 
         function stopDrawing() {
+            
             drawing = false;
 
             // Emit drawing end to others in the room
@@ -415,7 +422,7 @@
 
         socket.on('drawing', function (data) {
             const [x, y] = [data.x, data.y];
-
+            
             // Draw a line from the last position to the current position
             ctx.strokeStyle = data.color;
             ctx.lineWidth = 2;
@@ -533,60 +540,6 @@
                 const activeUsersCountElement = $('#activeUsersCount');
                 activeUsersCountElement.text(`Active Users: ${count}`);
             }
-        
-        // Function to handle the donation button click event
-        function handleDonateButtonClick() {
-            const amount = prompt("Enter donation amount:");
-            if (amount) {
-                // Call the function to initiate the Stripe payment with the entered amount
-                initiateStripePayment(amount);
-            }
-        }
-        
-        
-        // Function to handle donation
-        async function handleDonation(amount) {
-            try {
-                const stripe = Stripe('pk_live_51NekwrKK5Al7lyf9XiichdWUhb00vlsGpCXsSUuNpZIWtZXUlbntiuZVkoxNx8nXoAPJY7YKMbLKcoJQeUPgHjdw00tMgxQmVa'); // Replace 'your_publishable_key' with your actual publishable key
-
-                // Fetch the client secret from your server
-                const response = await fetch('/create-payment-intent', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ amount }),
-                });
-                const { clientSecret } = await response.json();
-
-                // Confirm the card payment
-                const result = await stripe.confirmCardPayment(clientSecret, {
-                    payment_method: {
-                        card: cardElement, // Make sure cardElement is defined
-                    },
-                });
-
-                if (result.error) {
-                    // Display error message to the user
-                    const errorElement = document.getElementById('card-errors');
-                    errorElement.textContent = result.error.message;
-                } else {
-                    // Payment successful, handle success
-                    alert(`Donation successful! Amount: $${amount}`);
-                }
-            } catch (error) {
-                console.error(error.message);
-            }
-        }
-
-            // Event listener for the donate button click
-            document.getElementById('donateButton').addEventListener('click', function () {
-                const amount = prompt("Enter donation amount:");
-                if (amount) {
-                    // Call the function to handle the donation with the entered amount
-                    handleDonation(amount);
-                }
-            });
     </script>
 </body>
 </html>
