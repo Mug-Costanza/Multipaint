@@ -140,13 +140,6 @@ io.on('connection', (socket) => {
             if (roomCanvases[data.room]) {
                 io.to(socket.id).emit('restoreCanvas', { canvasData: roomCanvases[data.room] });
             }
-            
-            // Always send existing canvas data to the newly joined user
-            if (roomCanvases[data.room]) {
-                roomCanvases[data.room].forEach((item) => {
-                    io.to(socket.id).emit(item.type, item.data);
-                });
-            }
         }
 
         io.emit('activeRooms', { activeRooms });
@@ -167,6 +160,13 @@ io.on('connection', (socket) => {
                 lastX: 0,
                 lastY: 0,
             };
+        }
+        
+        // Always send existing canvas data to the newly joined user
+        if (roomCanvases[data.room]) {
+            roomCanvases[data.room].forEach((item) => {
+                io.to(socket.id).emit(item.type, item.data);
+            });
         }
 
         // Set isDrawing to false after the user stops drawing
