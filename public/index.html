@@ -315,7 +315,7 @@
             //[lastX, lastY] = [x, y];
             
             // Emit drawing start to others in the room
-            sendMessage('drawingStart', { startX: x, y: lastY });
+            sendMessage('drawingStart', { startX: x, startY: y });
         }
 
         function draw(e) {
