@@ -328,7 +328,7 @@
                   const rect = canvas.getBoundingClientRect();
                   const [x, y] = [e.clientX - rect.left, e.clientY - rect.top];
                   
-                  [lastX, lastY] = [x, y];
+                 //[lastX, lastY] = [x, y];
                   
                 ctx.strokeStyle = color;
                 ctx.lineWidth = 2;
@@ -337,7 +337,7 @@
                 ctx.stroke();
 
                 // Update the last position
-                //[lastX, lastY] = [x, y];
+                [lastX, lastY] = [x, y];
 
                 // Emit drawing data to others in the room
                 sendMessage('drawing', { lastX, lastY, color });
