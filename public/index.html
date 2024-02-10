@@ -400,7 +400,7 @@
         function clearCanvas() {
             // Clear the canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+            
             // Emit clear canvas to others in the room
             sendMessage('clearCanvas', {});
         }
