@@ -340,7 +340,7 @@
                 [lastX, lastY] = [x, y];
 
                 // Emit drawing data to others in the room
-                sendMessage('drawing', { x, y, color });
+                sendMessage('drawing', { lastX, lastY, color });
               }
               
               function stopDrawing() {
