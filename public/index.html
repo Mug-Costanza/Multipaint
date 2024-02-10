@@ -314,10 +314,10 @@
             drawing = true;
 
             // Update the last position using newX and newY
-            [lastX, lastY] = [newX, newY];
+            [lastX, lastY] = [x, y];
 
             // Emit drawing start to others in the room
-            sendMessage('drawingStart', { startX: newX, startY: newY });
+            sendMessage('drawingStart', { startX: lastX, startY: lastY });
         }
 
               function draw(e) {
@@ -328,20 +328,21 @@
                   const rect = canvas.getBoundingClientRect();
                   const [x, y] = [e.clientX - rect.left, e.clientY - rect.top];
                   
-                  [lastX, lastY] = [x, y];
+                  //[lastX, lastY] = [x, y];
 
-                  // Draw a line from the last position to the current position
-                  ctx.strokeStyle = color;
-                  ctx.lineWidth = 2;
-                  ctx.moveTo(lastX, lastY);
-                  ctx.lineTo(x, y);
-                  ctx.stroke();
+                  setTimeout(() => {
+                          ctx.strokeStyle = color;
+                          ctx.lineWidth = 2;
+                          ctx.moveTo(lastX, lastY);
+                          ctx.lineTo(x, y);
+                          ctx.stroke();
 
-                  // Update the last position
-                  [lastX, lastY] = [x, y];
-                  
-                  // Emit drawing data to others in the room
-                  sendMessage('drawing', { x, y, color });
+                          // Update the last position
+                          [lastX, lastY] = [x, y];
+
+                          // Emit drawing data to others in the room
+                          sendMessage('drawing', { x, y, color });
+                      }, 10); // Adjust the delay time (in milliseconds) as needed
               }
               
               function stopDrawing() {
