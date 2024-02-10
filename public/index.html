@@ -320,25 +320,29 @@
 
         function draw(e) {
             if (!drawing) return;
-            
-            e.preventDefault()
-            
+
+            e.preventDefault();
+
             const rect = canvas.getBoundingClientRect();
             const [x, y] = [e.clientX - rect.left, e.clientY - rect.top];
-            
-            // Draw a line from the last position to the current position
-            //ctx.strokeStyle = color;
-            //ctx.lineWidth = 2;
-            //ctx.lineTo(x, y);
-            //ctx.stroke();
 
-            // Update the last position
-            [lastX, lastY] = [x, y];
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw a line from the last position to the current position
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
 
             // Emit drawing data to others in the room
             sendMessage('drawing', { x, y, color });
-        }
 
+            // Update the last position
+            [lastX, lastY] = [x, y];
+        }
+        
         function stopDrawing() {
             
             drawing = false;
