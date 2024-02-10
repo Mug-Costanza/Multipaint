@@ -313,10 +313,8 @@
             ctx.moveTo(lastX, lastY);
             drawing = true;
 
-            setTimeout(() => {
             // Update the last position using newX and newY
             [lastX, lastY] = [x, y];
-            }, 80); // Adjust the delay time (in milliseconds) as needed
 
             // Emit drawing start to others in the room
             sendMessage('drawingStart', { startX: lastX, startY: lastY });
@@ -331,8 +329,7 @@
                   const [x, y] = [e.clientX - rect.left, e.clientY - rect.top];
                   
                   //[lastX, lastY] = [x, y];
-
-                  setTimeout(() => {
+                  
                           ctx.strokeStyle = color;
                           ctx.lineWidth = 2;
                           ctx.moveTo(lastX, lastY);
@@ -340,11 +337,10 @@
                           ctx.stroke();
 
                           // Update the last position
-                          [lastX, lastY] = [x, y];
+                          //[lastX, lastY] = [x, y];
 
                           // Emit drawing data to others in the room
                           sendMessage('drawing', { x, y, color });
-                      }, 50); // Adjust the delay time (in milliseconds) as needed
               }
               
               function stopDrawing() {
