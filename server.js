@@ -178,6 +178,19 @@ io.on('connection', (socket) => {
         roomCanvases[data.room] = [];
         io.to(data.room).emit('clearCanvas', data);
     });
+    
+    // Add this block to your existing server-side code
+    socket.on('restoreCanvas', (data) => {
+        const { room } = data;
+
+        // Send existing canvas data to the user who requests to restore canvas
+        if (roomCanvases[room]) {
+            roomCanvases[room].forEach((item) => {
+                io.to(socket.id).emit(item.type, item.data);
+            });
+        }
+    });
+
 
     socket.on('activeRooms', function (data) {
         activeRooms = data.activeRooms;
