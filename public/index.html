@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Multipaint</title>
     
@@ -326,10 +327,10 @@
             const [x, y] = [e.clientX - rect.left, e.clientY - rect.top];
             
             // Draw a line from the last position to the current position
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 2;
-            ctx.lineTo(x, y);
-            ctx.stroke();
+            //ctx.strokeStyle = color;
+            //ctx.lineWidth = 2;
+            //ctx.lineTo(x, y);
+            //ctx.stroke();
 
             // Update the last position
             [lastX, lastY] = [x, y];
