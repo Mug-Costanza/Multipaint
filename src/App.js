@@ -48,7 +48,6 @@ function App() {
     initializeCanvas();
   }, []); // No dependency array, as canvas doesn't depend on any prop or state
 
-    /*
   const startDrawing = (e) => {
     e.preventDefault();
     const rect = canvas.getBoundingClientRect();
@@ -77,7 +76,6 @@ function App() {
   const stopDrawing = () => {
     drawing = false;
   };
-*/
     
   return (
     <div className="App">

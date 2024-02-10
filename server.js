@@ -149,7 +149,7 @@ io.on('connection', (socket) => {
         if (drawingStates[data.room] && drawingStates[data.room].drawing) {
             drawingStates[data.room].drawing = false;
             io.to(data.room).emit('drawingEnd', data);
-            
+
             // Store drawing data in roomCanvases
             roomCanvases[data.room] = roomCanvases[data.room] || [];
             roomCanvases[data.room].push({ type: 'drawingEnd', data });
@@ -161,7 +161,7 @@ io.on('connection', (socket) => {
                 lastY: 0,
             };
         }
-        
+
         // Always send existing canvas data to the newly joined user
         if (roomCanvases[data.room]) {
             roomCanvases[data.room].forEach((item) => {
@@ -169,21 +169,15 @@ io.on('connection', (socket) => {
             });
         }
 
-        // Set isDrawing to false after the user stops drawing
-        isDrawing = false;
-
         io.emit('activeRooms', { activeRooms });
     });
-
+    
+    // Modify the 'clearCanvas' event handler
     socket.on('clearCanvas', (data) => {
-           // Clear the canvas state for the room
-           roomCanvases[data.room] = [];
-           io.to(data.room).emit('clearCanvas', data);
-        
-            // Clear the canvas state for the room and send it to all clients
-            roomCanvases[data.room] = [];
-            io.to(data.room).emit('clearCanvas', data);
-       });
+        // Clear the canvas state for the room
+        roomCanvases[data.room] = [];
+        io.to(data.room).emit('clearCanvas', data);
+    });
 
     socket.on('activeRooms', function (data) {
         activeRooms = data.activeRooms;
