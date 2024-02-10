@@ -316,7 +316,7 @@
             setTimeout(() => {
             // Update the last position using newX and newY
             [lastX, lastY] = [x, y];
-            }, 20); // Adjust the delay time (in milliseconds) as needed
+            }, 80); // Adjust the delay time (in milliseconds) as needed
 
             // Emit drawing start to others in the room
             sendMessage('drawingStart', { startX: lastX, startY: lastY });
