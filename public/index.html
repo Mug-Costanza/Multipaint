@@ -306,16 +306,19 @@
         });
 
         function startDrawing(e) {
-                  const rect = canvas.getBoundingClientRect();
-                  [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
-                  [newX, newY] = [e.clientX - rect.left, e.clientY - rect.top];
-                  ctx.beginPath();
-                  ctx.moveTo(lastX, lastY);
-                  drawing = true;
-                  
-                  // Emit drawing start to others in the room
-                  sendMessage('drawingStart', { startX: newX, startY: newY });
-              }
+            const rect = canvas.getBoundingClientRect();
+            [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
+            [newX, newY] = [e.clientX - rect.left, e.clientY - rect.top];
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            drawing = true;
+
+            // Update the last position using newX and newY
+            [lastX, lastY] = [newX, newY];
+
+            // Emit drawing start to others in the room
+            sendMessage('drawingStart', { startX: newX, startY: newY });
+        }
 
               function draw(e) {
                   if (!drawing) return;
