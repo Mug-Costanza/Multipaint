@@ -308,16 +308,16 @@
         function startDrawing(e) {
             const rect = canvas.getBoundingClientRect();
             [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
-            [newX, newY] = [e.clientX - rect.left, e.clientY - rect.top];
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
-            drawing = true;
 
             // Update the last position using newX and newY
-            //[lastX, lastY] = [x, y];
-
+            [lastX, lastY] = [x, y];
+            
             // Emit drawing start to others in the room
-            sendMessage('drawingStart', { startX: x, startY: y });
+            sendMessage('drawingStart', { startX: lastX, startY: lastY });
+            
+            drawing = true;
         }
 
               function draw(e) {
