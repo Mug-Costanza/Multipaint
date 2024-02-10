@@ -308,6 +308,7 @@
         function startDrawing(e) {
                   const rect = canvas.getBoundingClientRect();
                   [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
+                  [newX, newY] = [e.clientX - rect.left, e.clientY - rect.top];
                   ctx.beginPath();
                   ctx.moveTo(lastX, lastY);
                   drawing = true;
@@ -315,7 +316,7 @@
                   [lastX, lastY] = [x, y];
                   
                   // Emit drawing start to others in the room
-                  sendMessage('drawingStart', { startX: x, startY: y });
+                  sendMessage('drawingStart', { startX: newX, startY: newY });
               }
 
               function draw(e) {
@@ -329,7 +330,7 @@
                   // Draw a line from the last position to the current position
                   ctx.strokeStyle = color;
                   ctx.lineWidth = 2;
-                  //ctx.moveTo(lastX, lastY);
+                  ctx.moveTo(lastX, lastY);
                   ctx.lineTo(x, y);
                   ctx.stroke();
 
