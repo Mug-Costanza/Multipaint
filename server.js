@@ -119,11 +119,6 @@ io.on('connection', (socket) => {
             
             io.to(data.room).emit('drawingStart', data);
             
-            // Send existing canvas data to the user who starts drawing
-            if (roomCanvases[data.room]) {
-                io.to(socket.id).emit('restoreCanvas', { canvasData: roomCanvases[data.room] });
-            }
-            
             io.emit('activeRooms', { activeRooms });
         }
     });
@@ -140,6 +135,11 @@ io.on('connection', (socket) => {
             // Store drawing data in roomCanvases
             roomCanvases[data.room] = roomCanvases[data.room] || [];
             roomCanvases[data.room].push({ type: 'drawing', data });
+            
+            // Send existing canvas data to the user who starts drawing
+            if (roomCanvases[data.room]) {
+                io.to(socket.id).emit('restoreCanvas', { canvasData: roomCanvases[data.room] });
+            }
         }
         
             io.emit('activeRooms', { activeRooms });
