@@ -333,11 +333,11 @@
             ctx.lineTo(x, y);
             ctx.stroke();
 
-            // Emit drawing data to others in the room
-            sendMessage('drawing', { x, y, color });
-
             // Update the last position
             [lastX, lastY] = [x, y];
+            
+            // Emit drawing data to others in the room
+            sendMessage('drawing', { x, y, color });
         }
         
         function stopDrawing() {
