@@ -282,7 +282,7 @@
         });
 
         // Add this block to your existing script
-        let canvas, ctx, drawing, lastX, lastY;
+        let canvas, ctx, drawing, lastX, lastY, newX, newY;
 
         $(document).ready(function () {
             // Get the canvas and its 2d context
@@ -313,7 +313,7 @@
                   ctx.moveTo(lastX, lastY);
                   drawing = true;
 
-                  [lastX, lastY] = [x, y];
+                  //[lastX, lastY] = [x, y];
                   
                   // Emit drawing start to others in the room
                   sendMessage('drawingStart', { startX: newX, startY: newY });
