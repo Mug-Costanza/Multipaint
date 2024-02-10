@@ -314,7 +314,7 @@
             drawing = true;
 
             // Update the last position using newX and newY
-            [lastX, lastY] = [x, y];
+            //[lastX, lastY] = [x, y];
 
             // Emit drawing start to others in the room
             sendMessage('drawingStart', { startX: lastX, startY: lastY });
@@ -337,7 +337,7 @@
                           ctx.stroke();
 
                           // Update the last position
-                          //[lastX, lastY] = [x, y];
+                          [lastX, lastY] = [x, y];
 
                           // Emit drawing data to others in the room
                           sendMessage('drawing', { x, y, color });
