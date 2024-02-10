@@ -312,7 +312,7 @@
             ctx.moveTo(lastX, lastY);
             drawing = true;
 
-            //[lastX, lastY] = [x, y];
+            [lastX, lastY] = [x, y];
             
             // Emit drawing start to others in the room
             sendMessage('drawingStart', { startX: lastX, startY: lastY });
@@ -330,7 +330,7 @@
             ctx.strokeStyle = color;
             ctx.lineWidth = 2;
             ctx.moveTo(lastX, lastY);
-            //ctx.lineTo(x, y);
+            ctx.lineTo(x, y);
             ctx.stroke();
 
             // Update the last position
@@ -375,6 +375,7 @@
             // Draw a line from the last position to the current position
             ctx.strokeStyle = color;
             ctx.lineWidth = 2;
+            ctx.moveTo(lastX, lastY);
             ctx.lineTo(x, y);
             ctx.stroke();
 
