@@ -49,7 +49,7 @@ function App() {
   }, []); // No dependency array, as canvas doesn't depend on any prop or state
 
   const startDrawing = (e) => {
-    e.preventDefault();
+    //e.preventDefault();
     const rect = canvas.getBoundingClientRect();
     [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
     ctx.beginPath();
@@ -58,7 +58,7 @@ function App() {
   };
 
   const draw = (e) => {
-    e.preventDefault();
+    //e.preventDefault();
     if (!drawing) return;
     const rect = canvas.getBoundingClientRect();
     const [x, y] = [e.clientX - rect.left, e.clientY - rect.top];
