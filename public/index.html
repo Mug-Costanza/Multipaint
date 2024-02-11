@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <div></div>
     <title>Multipaint</title>
     
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -86,6 +86,9 @@
             list-style-type: none;
             color: #ffffff; /* Set text color for messages */
             position: fixed;
+            max-width: 150px;
+            word-wrap: break-word;
+            background-color: black;
         }
 
         #form {
@@ -105,20 +108,26 @@
             flex: 1;
             padding: 8px;
             margin-right: 10px;
-            background-color: #555555; /* Darker background color for the message input box */
+            background-color:  black; /* Darker background color for the message input box */
             color: #ffffff; /* Text color for the message input box */
             border: none;
             border-radius: 3px;
+            max-width: 150px;
+            word-wrap: break-word;
         }
 
         /* Set color for system messages */
         #messages li span.system {
             color: #ffffff;
+            max-width: 150px;
+            word-wrap: break-word;
         }
 
         /* Set color for default username */
         #messages li span.default-username {
             color: #ffffff;
+            max-width: 150px;
+            word-wrap: break-word;
         }
     </style>
 
@@ -307,42 +316,42 @@
 
         function startDrawing(e) {
             const rect = canvas.getBoundingClientRect();
-            e.preventDefault();
             [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
+
+            // Store the path as an array of points
+            const path = [{ x: lastX, y: lastY }];
+
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
 
-            // Update the last position using newX and newY
-            //[lastX, lastY] = [x, y];
-            
             drawing = true;
-            
-            // Emit drawing start to others in the room
-            sendMessage('drawingStart', { startX: lastX, startY: lastY });
+
+            // Emit drawing start to others in the room with the entire path
+            sendMessage('drawingStart', { path });
         }
 
-              function draw(e) {
-                  if (!drawing) return;
+        function draw(e) {
+            if (!drawing) return;
 
-                  e.preventDefault();
+            e.preventDefault();
 
-                  const rect = canvas.getBoundingClientRect();
-                  const [x, y] = [e.clientX - rect.left, e.clientY - rect.top];
-                  
-                 //[lastX, lastY] = [x, y];
-                  
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 2;
-                ctx.moveTo(lastX, lastY);
-                ctx.lineTo(x, y);
-                ctx.stroke();
+            const rect = canvas.getBoundingClientRect();
+            const [x, y] = [e.clientX - rect.left, e.clientY - rect.top];
 
-                // Update the last position
-                [lastX, lastY] = [x, y];
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.lineTo(x, y);
+            ctx.stroke();
 
-                // Emit drawing data to others in the room
-                sendMessage('drawing', { lastX, lastY, color });
-              }
+            // Update the last position
+            [lastX, lastY] = [x, y];
+
+            // Append the new point to the path
+            const path = [{ x, y }];
+
+            // Emit drawing data to others in the room with the updated path
+            sendMessage('drawing', { path, color });
+        }
               
               function stopDrawing() {
                   
