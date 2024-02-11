@@ -322,7 +322,7 @@
               function draw(e) {
                   if (!drawing) return;
 
-                  e.preventDefault();
+                  //e.preventDefault();
 
                   const rect = canvas.getBoundingClientRect();
                   const [x, y] = [e.clientX - rect.left, e.clientY - rect.top];
@@ -355,7 +355,7 @@
 
         // Function to handle touch start
         function handleTouchStart(e) {
-            e.preventDefault(); // Prevent default touch event behavior
+            //e.preventDefault(); // Prevent default touch event behavior
             const touch = e.touches[0];
             const rect = canvas.getBoundingClientRect(); // Define rect here
             [touchStartX, touchStartY] = [touch.clientX - rect.left, touch.clientY - rect.top];
@@ -369,7 +369,7 @@
 
         // Function to handle touch move
         function handleTouchMove(e) {
-            e.preventDefault(); // Prevent default touch event behavior
+            //e.preventDefault(); // Prevent default touch event behavior
             const touch = e.touches[0];
             const rect = canvas.getBoundingClientRect(); // Define rect here
             const [x, y] = [touch.clientX - rect.left, touch.clientY - rect.top];
@@ -390,7 +390,7 @@
 
         // Function to handle touch end
         function handleTouchEnd(e) {
-            e.preventDefault(); // Prevent default touch event behavior
+            //e.preventDefault(); // Prevent default touch event behavior
             drawing = false;
 
             // Emit drawing end to others in the room
