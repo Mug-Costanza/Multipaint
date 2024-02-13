@@ -346,6 +346,8 @@
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
             drawing = true;
+            
+            [lastX, lastY] = [x, y];
 
             // Emit drawing start to others in the room
             sendMessage('drawingStart', { startX: lastX, startY: lastY });
