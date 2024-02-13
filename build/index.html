@@ -343,9 +343,9 @@
         function startDrawing(e) {
             const rect = canvas.getBoundingClientRect();
             [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.stroke();
+            //ctx.beginPath();
+            //ctx.moveTo(lastX, lastY);
+            //ctx.stroke();
             drawing = true;
 
             // Emit drawing start to others in the room
@@ -360,13 +360,13 @@
             // Draw a line from the last position to the current position
             ctx.strokeStyle = color;
             ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(x, y);
-            ctx.stroke();
+            //ctx.beginPath();
+            //ctx.moveTo(lastX, lastY);
+            //ctx.lineTo(x, y);
+            //ctx.stroke();
 
             // Update the last position
-            [lastX, lastY] = [x, y];
+            //[lastX, lastY] = [x, y];
 
             // Emit drawing data to others in the room
             sendMessage('drawing', { x, y, color });
