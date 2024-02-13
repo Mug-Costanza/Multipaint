@@ -343,8 +343,8 @@
         function startDrawing(e) {
             const rect = canvas.getBoundingClientRect();
             [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
+            //ctx.beginPath();
+            //ctx.moveTo(lastX, lastY);
             drawing = true;
 
             // Emit drawing start to others in the room
@@ -373,7 +373,7 @@
 
         function stopDrawing() {
             drawing = false;
-
+            
             // Emit drawing end to others in the room
             sendMessage('drawingEnd', {});
         }
