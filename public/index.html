@@ -1,13 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8"/>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <div></div>
     <title>Multipaint</title>
-    
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
     <style>
         body {
@@ -79,14 +75,16 @@
         }
         
         #messages {
-            height: 30vh; /* Set a fixed height for the messages container */
-            overflow-y: auto; /* Enable vertical scrollbar for the messages */
-            margin: 10px 0 0 10px;
-            padding: 0;
+            height: 30vh;
+            overflow-y: auto;
+            margin: 10px 10px 0px 10px; /* Adjusted the left margin to 10px */
+            padding: 0px;
             list-style-type: none;
-            color: #ffffff; /* Set text color for messages */
+            color: #ffffff;
             position: fixed;
-            max-width: 500px;
+            background-color: #0d0d0d;
+            max-width: 400px;
+            word-wrap: break-word;
         }
 
         #form {
@@ -106,30 +104,25 @@
             flex: 1;
             padding: 8px;
             margin-right: 10px;
+            background-color: #555555; /* Darker background color for the message input box */
             color: #ffffff; /* Text color for the message input box */
             border: none;
             border-radius: 3px;
-            word-wrap: break-word;
-            background-color: #666666;
         }
 
         /* Set color for system messages */
         #messages li span.system {
             color: #ffffff;
-            word-wrap: break-word;
         }
 
         /* Set color for default username */
         #messages li span.default-username {
             color: #ffffff;
-            word-wrap: break-word;
         }
     </style>
 
 </head>
 <body>
-    <div id="root"></div>
-    
     <canvas id="canvas" width="3000" height="3000"></canvas>
     
     <div id="landing" style="text-align: center; margin-top: 50px;">
@@ -164,7 +157,7 @@
     <div id="content">
     <div id="settings" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);">
         <label for="username">Username:</label>
-        <input id="username" autocomplete="off" />
+        <input id="username" autocomplete="off" value="" maxlength="30" />
         <label for="color">Color:</label>
         <input id="color" type="color" value="#ffffff" />
         <button id="updateSettings" onclick="updateSettings()">Join Room</button>
@@ -172,7 +165,7 @@
 
     <div id="activeUsersCount" style="position: fixed; top: 10px; left: 10px; color: #ffffff;"></div>
     
-    <ul id="messages" style="flex: 1; display: flex; flex-direction: column; align-items: flex-start; margin-left: 10px; left: 0%; top: 10%;"></ul>
+    <ul id="messages" style="flex: 1; display: flex; flex-direction: column; align-items: flex-start; margin-left: 0px; margin-top: -30px; left: 0%; top: 10%;"></ul>
     
     <div id="clearCanvasContainer" style="position: fixed; top: 10px; left: 50%; transform: translateX(-50%);">
             <button id="clearCanvasButton" onclick="clearCanvas()">Clear Canvas</button>
@@ -182,10 +175,10 @@
     <button style="position: fixed; top: 50px; right: 10px; background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;" onclick="window.location.href='/'">Back to Menu</button>
     
     <form id="form" action="">
-        <input id="m" autocomplete="off" /><button>Send</button>
+        <input id="m" autocomplete="off" maxlength="300" /><button>Send</button>
     </form>
     </div>
-    
+
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 
@@ -197,6 +190,17 @@
         let color = '';
         let activeRooms = {};  // Initialize activeRooms as an empty object
         let activeRoomsVar = [];  // Initialize activeRooms as an empty object
+        
+        function setCookie(name, value, days) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+        }
+        
+        function getCookie(name) {
+            const keyValue = document.cookie.match(`(^|;) ?${name}=([^;]*)(;|$)`);
+            return keyValue ? keyValue[2] : null;
+        }
 
         function joinRoom() {
             const roomCode = $('#roomCode').val().trim();
@@ -219,13 +223,34 @@
             $('#content').show();
             $('#landing').hide();
             document.title = roomCodeInUrl;
+
+            // Load username and color from cookies
+            const savedUsername = getCookie('username');
+            const savedColor = getCookie('color');
+
+            if (savedUsername) {
+                // Check if the saved username is "Guest"
+                if (savedUsername === "Guest") {
+                    // If the saved username is "Guest", set the input value to blank
+                    $('#username').val("");
+                } else {
+                    // If the saved username is not "Guest", set the input value to the saved username
+                    $('#username').val(savedUsername);
+                }
+            }
+
+            if (savedColor) {
+                $('#color').val(savedColor);
+            }
+
+            // Update settings with loaded values
+            // updateSettings();
         } else {
             // Room code is not present, show landing page
             $('#landing').show();
             $('#content').hide();
             $("#canvas").hide();
         }
-
         // Enable message input and button after updating settings
         const enableMessageInput = () => {
             $('#m').prop('disabled', false);
@@ -240,25 +265,31 @@
             socket.emit('restoreCanvas', {ctx});
         };
 
-        // Function to update user settings
-            const updateSettings = () => {
-                username = $('#username').val() || 'Guest';
-                color = $('#color').val() || '#000000';
+        const updateSettings = () => {
+            username = $('#username').val() || 'Guest';
+            color = $('#color').val() || '#ffffff';
 
-                // Emit user information to the server
-                socket.emit('join', { room, username, color });
+            // Set cookies for username and color
+            setCookie('username', username, 365);
+            setCookie('color', color, 365);
 
-                // Call restoreCanvas immediately after emitting the join event
-                restoreCanvas();
+            // Emit user information to the server
+            socket.emit('join', { room, username, color });
 
-                // Hide settings
-                $('#settings').hide();
-                $('#canvas').show();
+            // Call restoreCanvas immediately after emitting the join event
+            restoreCanvas();
 
-                // Enable message input and button
-                enableMessageInput();
-            };
-        
+            // Hide settings
+            $('#settings').hide();
+            $('#canvas').show();
+            
+            $('#messages').width("400px");
+            $('#messages').css('padding', '10px');
+
+            // Enable message input and button
+            enableMessageInput();
+        };
+
         const sendMessage = (messageType, data) => {
             // Include username and color in the message data
             socket.emit(messageType, { room, username, color, ...data });
@@ -286,7 +317,7 @@
         });
 
         // Add this block to your existing script
-        let canvas, ctx, drawing, lastX, lastY, newX, newY;
+        let canvas, ctx, drawing, lastX, lastY;
 
         $(document).ready(function () {
             // Get the canvas and its 2d context
@@ -311,50 +342,40 @@
 
         function startDrawing(e) {
             const rect = canvas.getBoundingClientRect();
-            [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
-
-            // Store the path as an array of points
-            const path = [{ x: lastX, y: lastY }];
-
+            [lastX, lastY] = [e.offsetX, e.offsetY];
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
-
             drawing = true;
 
-            // Emit drawing start to others in the room with the entire path
-            sendMessage('drawingStart', { path });
+            // Emit drawing start to others in the room
+            sendMessage('drawingStart', { startX: lastX, startY: lastY });
         }
 
         function draw(e) {
             if (!drawing) return;
+            const [x, y] = [e.offsetX, e.offsetY];
 
-            e.preventDefault();
-
-            const rect = canvas.getBoundingClientRect();
-            const [x, y] = [e.clientX - rect.left, e.clientY - rect.top];
-
+            // Draw a line from the last position to the current position
             ctx.strokeStyle = color;
             ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
             ctx.lineTo(x, y);
             ctx.stroke();
 
             // Update the last position
             [lastX, lastY] = [x, y];
 
-            // Append the new point to the path
-            const path = [{ x, y }];
-
-            // Emit drawing data to others in the room with the updated path
-            sendMessage('drawing', { path, color });
+            // Emit drawing data to others in the room
+            sendMessage('drawing', { x, y, color });
         }
-              
-              function stopDrawing() {
-                  
-                  drawing = false;
 
-                  // Emit drawing end to others in the room
-                  sendMessage('drawingEnd', {});
-              }
+        function stopDrawing() {
+            drawing = false;
+
+            // Emit drawing end to others in the room
+            sendMessage('drawingEnd', {});
+        }
         
         // Variables to store touch start coordinates
         let touchStartX, touchStartY;
@@ -383,7 +404,6 @@
             // Draw a line from the last position to the current position
             ctx.strokeStyle = color;
             ctx.lineWidth = 2;
-            ctx.moveTo(lastX, lastY);
             ctx.lineTo(x, y);
             ctx.stroke();
 
@@ -406,7 +426,7 @@
         function clearCanvas() {
             // Clear the canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
+
             // Emit clear canvas to others in the room
             sendMessage('clearCanvas', {});
         }
@@ -433,7 +453,7 @@
 
         socket.on('drawing', function (data) {
             const [x, y] = [data.x, data.y];
-            
+
             // Draw a line from the last position to the current position
             ctx.strokeStyle = data.color;
             ctx.lineWidth = 2;

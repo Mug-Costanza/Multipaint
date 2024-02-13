@@ -1,1 +1,576 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"/><link rel="icon" href="/favicon.ico"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Multipaint</title><script src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><style>body{background-color:#121212;color:#fff;font-family:Arial,sans-serif;margin:0;padding:0;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center;margin:0;padding:0;overflow:hidden;position:relative}#canvas{display:none}#content{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;overflow:hidden}#settings{display:flex;flex-direction:column;align-items:center}button,input,label{color:#fff}input{background-color:#555;padding:8px;margin-bottom:10px;color:#fff;border:none;border-radius:3px}input[type=color]{padding:8px;margin-bottom:10px;border:none;border-radius:3px}button{background-color:#4caf50;border:none;padding:10px 15px;border-radius:5px;cursor:pointer}button:hover{background-color:#45a049}#messages{height:30vh;overflow-y:auto;margin:10px 0 0 10px;padding:0;list-style-type:none;color:#fff;position:fixed}#form{position:fixed;bottom:0;left:0;right:0;background-color:#333;padding:10px;border-radius:5px;display:flex;align-items:center;justify-content:space-between}#m{flex:1;padding:8px;margin-right:10px;background-color:#555;color:#fff;border:none;border-radius:3px}#messages li span.system{color:#fff}#messages li span.default-username{color:#fff}</style><script defer="defer" src="/static/js/main.4be2b3dc.js"></script><link href="/static/css/main.e6c13ad2.css" rel="stylesheet"></head><body><div id="root"></div><canvas id="canvas" width="3000" height="3000"></canvas><div id="landing" style="text-align:center;margin-top:50px"><a href="https://www.buymeacoffee.com/multipaint"><button id="donateButton" style="position:fixed;top:10px;right:10px;background-color:#6772e5;color:#fff;font-size:1em;padding:8px 15px;border:none;border-radius:5px;cursor:pointer;display:flex">Donate</button></a> <a href="/privacy"><button id="privacyButton" style="position:fixed;top:50px;right:10px;background-color:#6772e5;color:#fff;font-size:1em;padding:8px 15px;border:none;border-radius:5px;cursor:pointer;display:flex">Privacy Policy</button></a><h1 style="font-size:2.5em;margin-bottom:10px;display:flex;justify-content:center"><form id="form" action=""><div id="card-element"></div><div id="card-errors" role="alert"></div></form><span style="color:red">M</span> <span style="color:#ff7f00">u</span> <span style="color:#ff0">l</span> <span style="color:#0f0">t</span> <span style="color:#00f">i</span> <span style="color:indigo">p</span> <span style="color:#9400d3">a</span> <span style="color:red">i</span> <span style="color:#ff7f00">n</span> <span style="color:#ff0">t</span></h1><p style="color:#ccc;font-size:1.2em;margin-bottom:20px">Create or Join a Room</p><label for="roomCode" style="color:#fff;font-size:1.2em">Enter Room Code:</label><div style="display:flex;align-items:center;justify-content:center;flex-direction:column;margin-bottom:20px"><input id="roomCode" onkeyup="handleKeyUp(event)" style="padding:8px;font-size:1em;border:1px solid #555;border-radius:3px;margin-bottom:10px;display:flex"/> <button onclick="joinRoom()" style="background-color:#4caf50;color:#fff;font-size:1em;padding:8px 15px;border:none;border-radius:5px;cursor:pointer;display:flex">Join Room</button> <button onclick="generateAndJoinRoom()" style="background-color:#4caf50;color:#fff;font-size:1em;padding:8px 15px;border:none;border-radius:5px;cursor:pointer;display:flex;margin-top:10px">Generate Random Room</button> <button onclick="joinRandomRoom()" style="background-color:#4caf50;color:#fff;font-size:1em;padding:8px 15px;border:none;border-radius:5px;cursor:pointer;display:flex;margin-top:10px">Join Random Room</button></div></div><div id="content"><div id="settings" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)"><label for="username">Username:</label> <input id="username" autocomplete="off"/> <label for="color">Color:</label> <input id="color" type="color" value="#ffffff"/> <button id="updateSettings" onclick="updateSettings()">Join Room</button></div><div id="activeUsersCount" style="position:fixed;top:10px;left:10px;color:#fff"></div><ul id="messages" style="flex:1;display:flex;flex-direction:column;align-items:flex-start;margin-left:10px;left:0;top:10%"></ul><div id="clearCanvasContainer" style="position:fixed;top:10px;left:50%;transform:translateX(-50%)"><button id="clearCanvasButton" onclick="clearCanvas()">Clear Canvas</button></div><button id="saveCanvasButton" onclick="saveCanvasImage()" style="position:fixed;top:10px;right:10px;background-color:#4caf50;color:#fff;font-size:1em;padding:8px 15px;border:none;border-radius:5px;cursor:pointer;display:flex">Save Image</button> <button style="position:fixed;top:50px;right:10px;background-color:#4caf50;color:#fff;font-size:1em;padding:8px 15px;border:none;border-radius:5px;cursor:pointer;display:flex" onclick='window.location.href="/"'>Back to Menu</button><form id="form" action=""><input id="m" autocomplete="off"/><button>Send</button></form></div><script src="https://code.jquery.com/jquery-3.6.4.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script><script>const socket=io(),room=window.location.pathname.slice(1);let username="",color="",activeRooms={},activeRoomsVar=[];function joinRoom(){const t=$("#roomCode").val().trim();t&&(window.location.href=`/${t}`)}function handleKeyUp(t){"Enter"===t.key&&joinRoom()}const roomCodeInUrl=window.location.pathname.slice(1);roomCodeInUrl?($("#content").show(),$("#landing").hide(),document.title=roomCodeInUrl):($("#landing").show(),$("#content").hide(),$("#canvas").hide());const enableMessageInput=()=>{$("#m").prop("disabled",!1),$("form button").prop("disabled",!1)},restoreCanvas=()=>{socket.emit("restoreCanvas",{ctx:ctx})},updateSettings=()=>{username=$("#username").val()||"Guest",color=$("#color").val()||"#000000",socket.emit("join",{room:room,username:username,color:color}),restoreCanvas(),$("#settings").hide(),$("#canvas").show(),enableMessageInput()},sendMessage=(t,o)=>{socket.emit(t,{room:room,username:username,color:color,...o}),$("#m").val("")};let canvas,ctx,drawing,lastX,lastY,touchStartX,touchStartY;function startDrawing(t){const o=canvas.getBoundingClientRect();[lastX,lastY]=[t.clientX-o.left,t.clientY-o.top],ctx.beginPath(),ctx.moveTo(lastX,lastY),drawing=!0,sendMessage("drawingStart",{startX:lastX,startY:lastY})}function draw(t){if(!drawing)return;t.preventDefault();const o=canvas.getBoundingClientRect(),[e,n]=[t.clientX-o.left,t.clientY-o.top];ctx.strokeStyle=color,ctx.lineWidth=2,ctx.lineTo(e,n),ctx.stroke(),[lastX,lastY]=[e,n],sendMessage("drawing",{x:e,y:n,color:color})}function stopDrawing(){drawing=!1,sendMessage("drawingEnd",{})}function handleTouchStart(t){t.preventDefault();const o=t.touches[0],e=canvas.getBoundingClientRect();[touchStartX,touchStartY]=[o.clientX-e.left,o.clientY-e.top],ctx.beginPath(),ctx.moveTo(touchStartX,touchStartY),sendMessage("drawingStart",{startX:touchStartX,startY:touchStartY})}function handleTouchMove(t){t.preventDefault();const o=t.touches[0],e=canvas.getBoundingClientRect(),[n,a]=[o.clientX-e.left,o.clientY-e.top];ctx.strokeStyle=color,ctx.lineWidth=2,ctx.lineTo(n,a),ctx.stroke(),[touchStartX,touchStartY]=[n,a],sendMessage("drawing",{x:n,y:a,color:color})}function handleTouchEnd(t){t.preventDefault(),drawing=!1,sendMessage("drawingEnd",{})}function clearCanvas(){ctx.clearRect(0,0,canvas.width,canvas.height),sendMessage("clearCanvas",{})}function appendMessage(t){const o=$("<li>").html(t),e=$("#messages");e.append(o),e.scrollTop(e.prop("scrollHeight"))}function getActiveRooms(){const t=Object.keys(activeRooms).filter((t=>activeRooms[t]>0));return t}function joinRandomRoom(){const t=activeRooms;if(t.length>0){const o=t[Math.floor(Math.random()*t.length)];console.log("Random Room:",o),window.location.href=`/${o}`,io.to(data.room).emit("activeUsersCount",{room:data.room,count:activeRooms[data.room]})}else alert("No active rooms available. Create or join a room manually.")}$("form").submit((function(){return sendMessage("message",{message:$("#m").val().trim()}),!1})),$("#username").on("keyup",(function(t){"Enter"===t.key&&updateSettings()})),socket.on("message",(function(t){appendMessage(`<span style="color: ${t.color}">${t.username}:</span> ${t.message}`)})),$(document).ready((function(){canvas=document.getElementById("canvas"),ctx=canvas.getContext("2d"),drawing=!1,lastX=0,lastY=0,canvas.addEventListener("mousedown",startDrawing),canvas.addEventListener("mousemove",draw),canvas.addEventListener("mouseup",stopDrawing),canvas.addEventListener("mouseout",stopDrawing),canvas.addEventListener("touchstart",handleTouchStart),canvas.addEventListener("touchmove",handleTouchMove),canvas.addEventListener("touchend",handleTouchEnd)})),socket.on("drawingStart",(function(t){[lastX,lastY]=[t.startX,t.startY],ctx.beginPath(),ctx.moveTo(lastX,lastY)})),socket.on("drawing",(function(t){const[o,e]=[t.x,t.y];ctx.strokeStyle=t.color,ctx.lineWidth=2,ctx.lineTo(o,e),ctx.stroke(),[lastX,lastY]=[o,e]})),socket.on("drawingEnd",(function(){drawing=!1})),socket.on("clearCanvas",(function(){ctx.clearRect(0,0,canvas.width,canvas.height)})),socket.on("userJoin",(function(t){activeRooms[t.room]=(activeRooms[t.room]||0)+1,io.to(t.room).emit("activeUsersCount",{room:t.room,count:activeRooms[t.room]})})),socket.on("userLeave",(function(t){activeRooms[t.room]>0&&(activeRooms[t.room]--,io.to(t.room).emit("activeUsersCount",{room:t.room,count:activeRooms[t.room]}))})),socket.on("activeRooms",(function(t){activeRooms=t.activeRooms,activeRoomsVar=activeRooms})),socket.on("connection",(function(t){t.on("activeUsersCount",(function(o){io.to(t.id).emit("activeUsersCount",{room:o.room,count:activeRooms[o.room]})}))}));const saveCanvasImage=()=>{const t=document.getElementById("canvas").toDataURL(),o=document.createElement("a");o.href=t,o.download="image.png",o.click()};function generateAndJoinRoom(){const t=generateRandomRoomCode();window.location.href=`/${t}`}function generateRandomRoomCode(){const t="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";let o="";for(let e=0;e<6;e++){const e=Math.floor(62*Math.random());o+=t.charAt(e)}return o}function updateActiveUsersCount(t){$("#activeUsersCount").text(`Active Users: ${t}`)}socket.on("activeUsersCount",(function(t){updateActiveUsersCount(t.count)}))</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Multipaint</title>
+
+    <style>
+        body {
+            background-color: #121212; /* Dark background color */
+            color: #ffffff; /* Text color */
+            font-family: Arial, sans-serif; /* Choose a suitable font-family */
+            margin: 0;
+            padding: 0;
+            height: 100vh; /* Set the body height to full viewport height */
+            overflow: hidden; /* Hide vertical scrollbar */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #canvas {
+            display: none;
+        }
+
+        #content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #settings {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        label, input, button {
+            color: #ffffff; /* Text color for labels, input boxes, and buttons */
+        }
+
+        input {
+            background-color: #555555; /* Darker background color for input boxes */
+            padding: 8px;
+            margin-bottom: 10px;
+            color: #ffffff; /* Text color for input boxes */
+            border: none;
+            border-radius: 3px;
+        }
+
+        input[type="color"] {
+            padding: 8px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 3px;
+        }
+
+        button {
+            background-color: #4CAF50; /* Green button color */
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049; /* Darker green color on hover */
+        }
+        
+        #messages {
+            height: 30vh;
+            overflow-y: auto;
+            margin: 10px 10px 0px 10px; /* Adjusted the left margin to 10px */
+            padding: 0px;
+            list-style-type: none;
+            color: #ffffff;
+            position: fixed;
+            background-color: #0d0d0d;
+            max-width: 400px;
+            word-wrap: break-word;
+        }
+
+        #form {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #333333; /* Darker background color for the message input area */
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        #m {
+            flex: 1;
+            padding: 8px;
+            margin-right: 10px;
+            background-color: #555555; /* Darker background color for the message input box */
+            color: #ffffff; /* Text color for the message input box */
+            border: none;
+            border-radius: 3px;
+        }
+
+        /* Set color for system messages */
+        #messages li span.system {
+            color: #ffffff;
+        }
+
+        /* Set color for default username */
+        #messages li span.default-username {
+            color: #ffffff;
+        }
+    </style>
+
+</head>
+<body>
+    <canvas id="canvas" width="3000" height="3000"></canvas>
+    
+    <div id="landing" style="text-align: center; margin-top: 50px;">
+        <a href="https://www.buymeacoffee.com/multipaint"><button id="donateButton" style="position: fixed; top: 10px; right: 10px; background-color: #6772e5; color: #fff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Donate</button></a>
+        <a href="/privacy"><button id="privacyButton" style="position: fixed; top: 50px; right: 10px; background-color: #6772e5; color: #fff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Privacy Policy</button></a>
+        <h1 style="font-size: 2.5em; margin-bottom: 10px; display: flex; justify-content: center;">
+            <form id="form" action="">
+                <div id="card-element"></div>
+                <div id="card-errors" role="alert"></div>
+            </form>
+            <span style="color: #FF0000;">M</span>
+            <span style="color: #FF7F00;">u</span>
+            <span style="color: #FFFF00;">l</span>
+            <span style="color: #00FF00;">t</span>
+            <span style="color: #0000FF;">i</span>
+            <span style="color: #4B0082;">p</span>
+            <span style="color: #9400D3;">a</span>
+            <span style="color: #FF0000;">i</span>
+            <span style="color: #FF7F00;">n</span>
+            <span style="color: #FFFF00;">t</span>
+        </h1>
+        <p style="color: #cccccc; font-size: 1.2em; margin-bottom: 20px;">Create or Join a Room</p>
+        <label for="roomCode" style="color: #ffffff; font-size: 1.2em;">Enter Room Code:</label>
+        <div style="display: flex; align-items: center; justify-content: center; flex-direction: column; margin-bottom: 20px;">
+            <input id="roomCode" onkeyup="handleKeyUp(event)" style="padding: 8px; font-size: 1em; border: 1px solid #555555; border-radius: 3px; margin-bottom: 10px; display: flex;" />
+            <button onclick="joinRoom()" style="background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Join Room</button>
+            <button onclick="generateAndJoinRoom()" style="background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex; margin-top: 10px;">Generate Random Room</button>
+            <button onclick="joinRandomRoom()" style="background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex; margin-top: 10px;">Join Random Room</button>
+        </div>
+    </div>
+    
+    <div id="content">
+    <div id="settings" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);">
+        <label for="username">Username:</label>
+        <input id="username" autocomplete="off" value="" maxlength="30" />
+        <label for="color">Color:</label>
+        <input id="color" type="color" value="#ffffff" />
+        <button id="updateSettings" onclick="updateSettings()">Join Room</button>
+    </div>
+
+    <div id="activeUsersCount" style="position: fixed; top: 10px; left: 10px; color: #ffffff;"></div>
+    
+    <ul id="messages" style="flex: 1; display: flex; flex-direction: column; align-items: flex-start; margin-left: 0px; margin-top: -30px; left: 0%; top: 10%;"></ul>
+    
+    <div id="clearCanvasContainer" style="position: fixed; top: 10px; left: 50%; transform: translateX(-50%);">
+            <button id="clearCanvasButton" onclick="clearCanvas()">Clear Canvas</button>
+        </div>
+    
+    <button id="saveCanvasButton" onclick="saveCanvasImage()" style="position: fixed; top: 10px; right: 10px; background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Save Image</button>
+    <button style="position: fixed; top: 50px; right: 10px; background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;" onclick="window.location.href='/'">Back to Menu</button>
+    
+    <form id="form" action="">
+        <input id="m" autocomplete="off" maxlength="300" /><button>Send</button>
+    </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+
+    <script>
+        const socket = io();
+
+        const room = window.location.pathname.slice(1);
+        let username = '';
+        let color = '';
+        let activeRooms = {};  // Initialize activeRooms as an empty object
+        let activeRoomsVar = [];  // Initialize activeRooms as an empty object
+        
+        function setCookie(name, value, days) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+        }
+        
+        function getCookie(name) {
+            const keyValue = document.cookie.match(`(^|;) ?${name}=([^;]*)(;|$)`);
+            return keyValue ? keyValue[2] : null;
+        }
+
+        function joinRoom() {
+            const roomCode = $('#roomCode').val().trim();
+            if (roomCode) {
+                // Redirect to the room-specific URL
+                window.location.href = `/${roomCode}`;
+            }
+        }
+
+        function handleKeyUp(event) {
+            if (event.key === 'Enter') {
+                joinRoom();
+            }
+        }
+
+        // Check if there is a room code in the URL
+        const roomCodeInUrl = window.location.pathname.slice(1);
+        if (roomCodeInUrl) {
+            // Room code is present, show chat content
+            $('#content').show();
+            $('#landing').hide();
+            document.title = roomCodeInUrl;
+
+            // Load username and color from cookies
+            const savedUsername = getCookie('username');
+            const savedColor = getCookie('color');
+
+            if (savedUsername) {
+                // Check if the saved username is "Guest"
+                if (savedUsername === "Guest") {
+                    // If the saved username is "Guest", set the input value to blank
+                    $('#username').val("");
+                } else {
+                    // If the saved username is not "Guest", set the input value to the saved username
+                    $('#username').val(savedUsername);
+                }
+            }
+
+            if (savedColor) {
+                $('#color').val(savedColor);
+            }
+
+            // Update settings with loaded values
+            // updateSettings();
+        } else {
+            // Room code is not present, show landing page
+            $('#landing').show();
+            $('#content').hide();
+            $("#canvas").hide();
+        }
+        // Enable message input and button after updating settings
+        const enableMessageInput = () => {
+            $('#m').prop('disabled', false);
+            $('form button').prop('disabled', false);
+        };
+        
+        // Function to handle restoring canvas data
+        const restoreCanvas = () => {
+            // Your logic for restoring canvas data goes here
+            // For example, you might want to emit the 'restoreCanvas' event to the server
+            // with the appropriate data, and handle it on the server-side
+            socket.emit('restoreCanvas', {ctx});
+        };
+
+        const updateSettings = () => {
+            username = $('#username').val() || 'Guest';
+            color = $('#color').val() || '#ffffff';
+
+            // Set cookies for username and color
+            setCookie('username', username, 365);
+            setCookie('color', color, 365);
+
+            // Emit user information to the server
+            socket.emit('join', { room, username, color });
+
+            // Call restoreCanvas immediately after emitting the join event
+            restoreCanvas();
+
+            // Hide settings
+            $('#settings').hide();
+            $('#canvas').show();
+            
+            $('#messages').width("400px");
+            $('#messages').css('padding', '10px');
+
+            // Enable message input and button
+            enableMessageInput();
+        };
+
+        const sendMessage = (messageType, data) => {
+            // Include username and color in the message data
+            socket.emit(messageType, { room, username, color, ...data });
+
+            // Clear the input field
+            $('#m').val('');
+        };
+
+        $('form').submit(function () {
+            sendMessage('message', { message: $('#m').val().trim() });
+            return false;
+        });
+
+        // Event listener for the Enter key press in the username input
+        $('#username').on('keyup', function (event) {
+            if (event.key === 'Enter') {
+                updateSettings();
+            }
+        });
+
+        socket.on('message', function (data) {
+            // Display messages with usernames and colors
+            const message = `<span style="color: ${data.color}">${data.username}:</span> ${data.message}`;
+            appendMessage(message);
+        });
+
+        // Add this block to your existing script
+        let canvas, ctx, drawing, lastX, lastY;
+
+        $(document).ready(function () {
+            // Get the canvas and its 2d context
+            canvas = document.getElementById('canvas');
+            ctx = canvas.getContext('2d');
+
+            // Initialize drawing variables
+            drawing = false;
+            lastX = 0;
+            lastY = 0;
+
+            // Add mouse event listeners to the canvas
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            canvas.addEventListener('touchstart', handleTouchStart);
+            canvas.addEventListener('touchmove', handleTouchMove);
+            canvas.addEventListener('touchend', handleTouchEnd);
+        });
+
+        function startDrawing(e) {
+            const rect = canvas.getBoundingClientRect();
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            drawing = true;
+
+            // Emit drawing start to others in the room
+            sendMessage('drawingStart', { startX: lastX, startY: lastY });
+        }
+
+        function draw(e) {
+            if (!drawing) return;
+            const [x, y] = [e.offsetX, e.offsetY];
+
+            // Draw a line from the last position to the current position
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+
+            // Update the last position
+            [lastX, lastY] = [x, y];
+
+            // Emit drawing data to others in the room
+            sendMessage('drawing', { x, y, color });
+        }
+
+        function stopDrawing() {
+            drawing = false;
+
+            // Emit drawing end to others in the room
+            sendMessage('drawingEnd', {});
+        }
+        
+        // Variables to store touch start coordinates
+        let touchStartX, touchStartY;
+
+        // Function to handle touch start
+        function handleTouchStart(e) {
+            e.preventDefault(); // Prevent default touch event behavior
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect(); // Define rect here
+            [touchStartX, touchStartY] = [touch.clientX - rect.left, touch.clientY - rect.top];
+
+            ctx.beginPath();
+            ctx.moveTo(touchStartX, touchStartY);
+
+            // Emit drawing start to others in the room
+            sendMessage('drawingStart', { startX: touchStartX, startY: touchStartY });
+        }
+
+        // Function to handle touch move
+        function handleTouchMove(e) {
+            e.preventDefault(); // Prevent default touch event behavior
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect(); // Define rect here
+            const [x, y] = [touch.clientX - rect.left, touch.clientY - rect.top];
+
+            // Draw a line from the last position to the current position
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.lineTo(x, y);
+            ctx.stroke();
+
+            // Update the last position
+            [touchStartX, touchStartY] = [x, y];
+
+            // Emit drawing data to others in the room
+            sendMessage('drawing', { x, y, color });
+        }
+
+        // Function to handle touch end
+        function handleTouchEnd(e) {
+            e.preventDefault(); // Prevent default touch event behavior
+            drawing = false;
+
+            // Emit drawing end to others in the room
+            sendMessage('drawingEnd', {});
+        }
+        
+        function clearCanvas() {
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Emit clear canvas to others in the room
+            sendMessage('clearCanvas', {});
+        }
+
+        // Function to append messages and drawings to the messages container
+        function appendMessage(message) {
+            // Append the new message
+            const newMessage = $('<li>').html(message);
+            const messagesContainer = $('#messages');
+
+            // Append the new message and remove the oldest if needed
+            messagesContainer.append(newMessage);
+
+            // Scroll messages up when a new message is added
+            messagesContainer.scrollTop(messagesContainer.prop('scrollHeight'));
+        }
+
+        // Listen for drawing events from other users
+        socket.on('drawingStart', function (data) {
+            [lastX, lastY] = [data.startX, data.startY];
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+        });
+
+        socket.on('drawing', function (data) {
+            const [x, y] = [data.x, data.y];
+
+            // Draw a line from the last position to the current position
+            ctx.strokeStyle = data.color;
+            ctx.lineWidth = 2;
+            ctx.lineTo(x, y);
+            ctx.stroke();
+
+            // Update the last position
+            [lastX, lastY] = [x, y];
+        });
+
+        socket.on('drawingEnd', function () {
+            drawing = false;
+        });
+
+        socket.on('clearCanvas', function () {
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        socket.on('userJoin', function (data) {
+            // Increment the user count for the joined room
+            activeRooms[data.room] = (activeRooms[data.room] || 0) + 1;
+
+            // Emit the updated user count to all clients in the room
+            io.to(data.room).emit('activeUsersCount', { room: data.room, count: activeRooms[data.room] });
+        });
+
+        socket.on('userLeave', function (data) {
+            // Decrement the user count for the left room
+            if (activeRooms[data.room] > 0) {
+                activeRooms[data.room]--;
+
+                // Emit the updated user count to all clients in the room
+                io.to(data.room).emit('activeUsersCount', { room: data.room, count: activeRooms[data.room] });
+            }
+        });
+    
+    // Add this block to your existing script
+    socket.on('activeRooms', function (data) {
+        activeRooms = data.activeRooms; // Update the local activeRooms variable.
+        activeRoomsVar = activeRooms;
+    });
+        
+        socket.on('connection', function (socket) {
+            // Broadcast active user count to the new user
+            socket.on('activeUsersCount', function (data) {
+                io.to(socket.id).emit('activeUsersCount', { room: data.room, count: activeRooms[data.room] });
+            });
+        });
+
+        // Function to get the list of active rooms
+        function getActiveRooms() {
+            const activeRoomList = Object.keys(activeRooms).filter((room) => activeRooms[room] > 0);
+            return activeRoomList;
+        }
+
+        function joinRandomRoom() {
+            // Get the list of active rooms
+            const activeRoomList = activeRooms;
+
+            // Check if there are active rooms
+            if (activeRoomList.length > 0) {
+                // Randomly select a room from the list
+                const randomRoom = activeRoomList[Math.floor(Math.random() * activeRoomList.length)];
+
+                // Debugging: Log the randomly selected room to the console
+                console.log('Random Room:', randomRoom);
+
+                // Redirect to the selected room-specific URL
+                window.location.href = `/${randomRoom}`;
+                
+                // Emit the updated user count to all clients in the room
+                io.to(data.room).emit('activeUsersCount', { room: data.room, count: activeRooms[data.room] });
+            } else {
+                // Debugging: Alert the current state of activeRooms
+                alert("No active rooms available. Create or join a room manually.");
+            }
+        }
+        
+            //Function to save the canvas image
+            const saveCanvasImage = () => {
+                const canvas = document.getElementById('canvas');
+                const dataUrl = canvas.toDataURL(); // Get the data URL of the canvas image
+                const a = document.createElement('a');
+                a.href = dataUrl;
+                a.download = 'image.png';
+                a.click();
+            };
+        
+        function generateAndJoinRoom() {
+            const generatedRoomCode = generateRandomRoomCode();
+            window.location.href = `/${generatedRoomCode}`;
+        }
+
+        function generateRandomRoomCode() {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            const codeLength = 6; // Adjust the length of the generated room code if needed
+            let roomCode = '';
+
+            for (let i = 0; i < codeLength; i++) {
+                const randomIndex = Math.floor(Math.random() * characters.length);
+                roomCode += characters.charAt(randomIndex);
+            }
+
+            return roomCode;
+        }
+        
+        socket.on('activeUsersCount', function (data) {
+               // Update the active user count in the UI
+               updateActiveUsersCount(data.count);
+           });
+
+        // Function to update the active user count in the UI
+            function updateActiveUsersCount(count) {
+                const activeUsersCountElement = $('#activeUsersCount');
+                activeUsersCountElement.text(`Active Users: ${count}`);
+            }
+    </script>
+</body>
+</html>
