@@ -4,8 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Multipaint</title>
+    <meta content="Multipaint" property="og:title" />
+    <meta content="A collaborative drawing tool." property="og:description" />
+    <meta content="https://multipaint.net" property="og:url" />
+    <meta content="https://multipaint.net/favicon.ico" property="og:image" />
+    <meta content="rainbow" name="theme-color" />
 
     <style>
+        /* Define rainbow gradient */
+        :root {
+          --rainbow: linear-gradient(to right, violet, indigo, blue, green, yellow, orange, red);
+        }
+
+        /* Apply rainbow gradient to theme-color meta tag */
+        meta[name="theme-color"] {
+          content: var(--rainbow);
+        }
+        
         body {
             background-color: #121212; /* Dark background color */
             color: #ffffff; /* Text color */
@@ -119,8 +134,28 @@
         #messages li span.default-username {
             color: #ffffff;
         }
+        
+        /* Style for the toggle chat button */
+                #toggleChatButton {
+                    position: fixed;
+                    top: 10px;
+                    right: 120px; /* Adjust the positioning as needed */
+                    background-color: #4CAF50;
+                    color: #ffffff;
+                    font-size: 1em;
+                    padding: 8px 15px;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    display: none; /* Initially hide the button */
+                }
+        
+        /* Adjust the positioning of the clear canvas button */
+                #clearCanvasContainer {
+                    left: 50%;
+                    transform: translateX(-50%);
+                }
     </style>
-
 </head>
 <body>
     <canvas id="canvas" width="3000" height="3000"></canvas>
@@ -173,6 +208,7 @@
     
     <button id="saveCanvasButton" onclick="saveCanvasImage()" style="position: fixed; top: 10px; right: 10px; background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Save Image</button>
     <button style="position: fixed; top: 50px; right: 10px; background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;" onclick="window.location.href='/'">Back to Menu</button>
+    <button id="toggleChatButton" onclick="toggleChat()">Toggle Chat</button>
     
     <form id="form" action="">
         <input id="m" autocomplete="off" maxlength="300" /><button>Send</button>
@@ -249,6 +285,7 @@
             // Room code is not present, show landing page
             $('#landing').show();
             $('#content').hide();
+            $('#toggleChatButton').hide();
             $("#canvas").hide();
         }
         // Enable message input and button after updating settings
@@ -573,6 +610,38 @@
                 const activeUsersCountElement = $('#activeUsersCount');
                 activeUsersCountElement.text(`Active Users: ${count}`);
             }
+        
+        // Function to toggle the chat visibility
+               // Function to toggle the chat visibility
+               function toggleChat() {
+                   const messages = document.getElementById('messages');
+
+                   if (messages.style.display === 'none') {
+                       messages.style.display = 'block';
+                   } else {
+                       messages.style.display = 'none';
+                   }
+               }
+
+               // Function to show chat content and toggle button
+               function showChat() {
+                   const content = document.getElementById('content');
+                   const button = document.getElementById('toggleChatButton');
+
+                   $('#m').show();
+                   
+                   button.style.display = 'block'; // Show the toggle button
+                   button.textContent = 'Close Chat';
+               }
+
+               // Function to hide chat content and toggle button
+               function hideChat() {
+                   const content = document.getElementById('content');
+                   const button = document.getElementById('toggleChatButton');
+
+                   $('#m').hide();
+               }
+
     </script>
 </body>
 </html>
