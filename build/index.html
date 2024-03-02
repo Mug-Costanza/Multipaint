@@ -39,7 +39,8 @@
         }
         
         #canvas {
-            display: none;
+            display: none; /* Change display to block to ensure it's visible */
+            margin: auto; /* Center the canvas horizontally */
         }
 
         #content {
@@ -97,7 +98,7 @@
             list-style-type: none;
             color: #ffffff;
             position: fixed;
-            background-color: #0d0d0d;
+            background-color: rgba(0, 0, 0, 0.65);
             max-width: 400px;
             word-wrap: break-word;
         }
@@ -135,21 +136,6 @@
             color: #ffffff;
         }
         
-        /* Style for the toggle chat button */
-                #toggleChatButton {
-                    position: fixed;
-                    top: 10px;
-                    right: 120px; /* Adjust the positioning as needed */
-                    background-color: #4CAF50;
-                    color: #ffffff;
-                    font-size: 1em;
-                    padding: 8px 15px;
-                    border: none;
-                    border-radius: 5px;
-                    cursor: pointer;
-                    display: none; /* Initially hide the button */
-                }
-        
         /* Adjust the positioning of the clear canvas button */
                 #clearCanvasContainer {
                     left: 50%;
@@ -158,7 +144,7 @@
     </style>
 </head>
 <body>
-    <canvas id="canvas" width="3000" height="3000"></canvas>
+    <canvas id="canvas" width="110%" height="110%"></canvas>
     
     <div id="landing" style="text-align: center; margin-top: 50px;">
         <a href="https://www.buymeacoffee.com/multipaint"><button id="donateButton" style="position: fixed; top: 10px; right: 10px; background-color: #6772e5; color: #fff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Donate</button></a>
@@ -197,10 +183,15 @@
         <input id="color" type="color" value="#ffffff" />
         <button id="updateSettings" onclick="updateSettings()">Join Room</button>
     </div>
+    
+    <label htmlFor="publicToggle" id="publicToggleLabel" style="position: fixed; top: 40px; left: 10px; display: none;">Public Room:</label>
+    <input type="checkbox" id="publicToggle" style="position: fixed; top: 40px; left: 110px; display: none;"/>
 
     <div id="activeUsersCount" style="position: fixed; top: 10px; left: 10px; color: #ffffff;"></div>
+    <button id="toggleChatButton" onclick="toggleChat()" style="position: fixed; top: 40px; left: 10px; margin-top: 35vh;">Toggle Chat</button>
     
-    <ul id="messages" style="flex: 1; display: flex; flex-direction: column; align-items: flex-start; margin-left: 0px; margin-top: -30px; left: 0%; top: 10%;"></ul>
+    <div id="messages" style="flex: 1; position: fixed; flex-direction: column; align-items: flex-start; margin-left: 0px; margin-top: -30px; left: 0%; top: 10%;">
+    </div>
     
     <div id="clearCanvasContainer" style="position: fixed; top: 10px; left: 50%; transform: translateX(-50%);">
             <button id="clearCanvasButton" onclick="clearCanvas()">Clear Canvas</button>
@@ -208,7 +199,6 @@
     
     <button id="saveCanvasButton" onclick="saveCanvasImage()" style="position: fixed; top: 10px; right: 10px; background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Save Image</button>
     <button style="position: fixed; top: 50px; right: 10px; background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;" onclick="window.location.href='/'">Back to Menu</button>
-    <button id="toggleChatButton" onclick="toggleChat()">Toggle Chat</button>
     
     <form id="form" action="">
         <input id="m" autocomplete="off" maxlength="300" /><button>Send</button>
@@ -226,6 +216,11 @@
         let color = '';
         let activeRooms = {};  // Initialize activeRooms as an empty object
         let activeRoomsVar = [];  // Initialize activeRooms as an empty object
+        
+        let mostRecentUserJoinTimestamp = 0;
+        let mostRecentUser = '';
+        
+        let isFirstUser = false;
         
         function setCookie(name, value, days) {
             const expires = new Date();
@@ -258,6 +253,7 @@
             // Room code is present, show chat content
             $('#content').show();
             $('#landing').hide();
+            $('#toggleChatButton').hide();
             document.title = roomCodeInUrl;
 
             // Load username and color from cookies
@@ -285,7 +281,6 @@
             // Room code is not present, show landing page
             $('#landing').show();
             $('#content').hide();
-            $('#toggleChatButton').hide();
             $("#canvas").hide();
         }
         // Enable message input and button after updating settings
@@ -319,9 +314,17 @@
             // Hide settings
             $('#settings').hide();
             $('#canvas').show();
+            $('#toggleChatButton').show();
             
             $('#messages').width("400px");
             $('#messages').css('padding', '10px');
+            
+            // Check if the current user is the most recently-joined user
+            if (username === mostRecentUser) {
+                // Show the public room toggle for the most recently-joined user
+                $('#publicToggleLabel').show();
+                $('#publicToggle').show();
+            }
 
             // Enable message input and button
             enableMessageInput();
@@ -361,6 +364,13 @@
             canvas = document.getElementById('canvas');
             ctx = canvas.getContext('2d');
 
+            // Set canvas dimensions relative to the viewport
+            canvas.width = window.innerWidth * 1.1; // 90% of the viewport width
+            canvas.height = window.innerHeight * 1.1; // 90% of the viewport height
+            
+            $('#publicToggleLabel').hide();
+            $('#publicToggle').hide();
+
             // Initialize drawing variables
             drawing = false;
             lastX = 0;
@@ -375,6 +385,8 @@
             canvas.addEventListener('touchstart', handleTouchStart);
             canvas.addEventListener('touchmove', handleTouchMove);
             canvas.addEventListener('touchend', handleTouchEnd);
+            
+            toggleChat();
         });
 
         function startDrawing(e) {
@@ -518,8 +530,26 @@
 
             // Emit the updated user count to all clients in the room
             io.to(data.room).emit('activeUsersCount', { room: data.room, count: activeRooms[data.room] });
-        });
 
+            // Store the timestamp of the most recent user join event
+            const currentTime = new Date().getTime();
+            if (currentTime > mostRecentUserJoinTimestamp) {
+                mostRecentUserJoinTimestamp = currentTime;
+                mostRecentUser = data.username;
+            }
+
+            // Check if the current user is the first user
+            if (!isFirstUser) {
+                isFirstUser = true;
+                // Send a message to the chat box indicating that this is the first user
+                io.to(data.room).emit('message', {
+                    username: 'System',
+                    color: '#ffffff',
+                    message: `${data.username} is the first user in the room.`
+                });
+            }
+        });
+        
         socket.on('userLeave', function (data) {
             // Decrement the user count for the left room
             if (activeRooms[data.room] > 0) {
@@ -527,6 +557,35 @@
 
                 // Emit the updated user count to all clients in the room
                 io.to(data.room).emit('activeUsersCount', { room: data.room, count: activeRooms[data.room] });
+
+                // Check if the leaving user is the first user
+                if (data.username === mostRecentUser) {
+                    // Find the new earliest join timestamp and corresponding username
+                    let earliestJoinTimestamp = Infinity;
+                    let newFirstUser = '';
+                    for (const [user, joinTime] of Object.entries(activeUsers)) {
+                        if (joinTime < earliestJoinTimestamp) {
+                            earliestJoinTimestamp = joinTime;
+                            newFirstUser = user;
+                        }
+                    }
+                    // Update the first user's information
+                    firstUserJoinTimestamp = earliestJoinTimestamp;
+                    firstUser = newFirstUser;
+
+                    // Print the updated result
+                    console.log(`The first person to join the room is now: ${firstUser}`);
+                }
+            }
+
+            // Check if there are no users left in the room
+            if (activeRooms[data.room] === 0) {
+                // Clear the first user information
+                firstUserJoinTimestamp = 0;
+                firstUser = '';
+
+                // Print a message indicating that there are no users in the room
+                console.log('No users left in the room.');
             }
         });
     
@@ -572,15 +631,15 @@
             }
         }
         
-            //Function to save the canvas image
-            const saveCanvasImage = () => {
-                const canvas = document.getElementById('canvas');
-                const dataUrl = canvas.toDataURL(); // Get the data URL of the canvas image
-                const a = document.createElement('a');
-                a.href = dataUrl;
-                a.download = 'image.png';
-                a.click();
-            };
+        //Function to save the canvas image
+        const saveCanvasImage = () => {
+            const canvas = document.getElementById('canvas');
+            const dataUrl = canvas.toDataURL(); // Get the data URL of the canvas image
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = 'image.png';
+            a.click();
+        };
         
         function generateAndJoinRoom() {
             const generatedRoomCode = generateRandomRoomCode();
@@ -606,42 +665,44 @@
            });
 
         // Function to update the active user count in the UI
-            function updateActiveUsersCount(count) {
-                const activeUsersCountElement = $('#activeUsersCount');
-                activeUsersCountElement.text(`Active Users: ${count}`);
-            }
+        function updateActiveUsersCount(count) {
+            const activeUsersCountElement = $('#activeUsersCount');
+            activeUsersCountElement.text(`Active Users: ${count}`);
+        }
         
-        // Function to toggle the chat visibility
-               // Function to toggle the chat visibility
-               function toggleChat() {
-                   const messages = document.getElementById('messages');
+        function toggleChat() {
+            const messages = document.getElementById('messages');
+            const toggleChatButton = document.getElementById('toggleChatButton');
 
-                   if (messages.style.display === 'none') {
-                       messages.style.display = 'block';
-                   } else {
-                       messages.style.display = 'none';
-                   }
-               }
+            if (messages.style.display === 'none' || messages.style.display === '') {
+                messages.style.display = 'block';
+                toggleChatButton.style.marginTop = '35vh';
+                toggleChatButton.textContent = 'Close Chat'; // Change button text to "Close Chat"
+            } else {
+                messages.style.display = 'none';
+                toggleChatButton.style.marginTop = '5vh';
+                toggleChatButton.textContent = 'Open Chat'; // Change button text to "Open Chat"
+            }
+        }
 
-               // Function to show chat content and toggle button
-               function showChat() {
-                   const content = document.getElementById('content');
-                   const button = document.getElementById('toggleChatButton');
+        // Function to show chat content and toggle button
+        function showChat() {
+            const content = document.getElementById('content');
+            const button = document.getElementById('toggleChatButton');
 
-                   $('#m').show();
+            $('#m').show();
                    
-                   button.style.display = 'block'; // Show the toggle button
-                   button.textContent = 'Close Chat';
-               }
+            //button.style.display = 'block'; // Show the toggle button
+            button.textContent = 'Close Chat';
+        }
 
-               // Function to hide chat content and toggle button
-               function hideChat() {
-                   const content = document.getElementById('content');
-                   const button = document.getElementById('toggleChatButton');
+        // Function to hide chat content and toggle button
+        function hideChat() {
+            const content = document.getElementById('content');
+            const button = document.getElementById('toggleChatButton');
 
-                   $('#m').hide();
-               }
-
+            $('#m').hide();
+        }
     </script>
 </body>
 </html>
