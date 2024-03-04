@@ -106,12 +106,19 @@ io.on('connection', (socket) => {
     });
     
     socket.on('drawingStart', (data) => {
-               if (!drawingStates[data.room] || !drawingStates[data.room].drawing) {
-                   drawingStates[data.room] = {
-                       drawing: true,
-                       lastX: data.startX,
-                       lastY: data.startY,
-                   };
+            const { room, userId } = data; // Assume `userId` is passed in `data`
+
+            // Initialize the room if it doesn't exist
+            if (!drawingStates[room]) {
+                drawingStates[room] = {};
+            }
+
+            // Initialize the user's drawing state in the room
+            drawingStates[room][userId] = {
+                drawing: true,
+                lastX: data.startX,
+                lastY: data.startY,
+            };
                
                // Store drawing data in roomCanvases including start color
                roomCanvases[data.room] = roomCanvases[data.room] || [];
@@ -120,30 +127,25 @@ io.on('connection', (socket) => {
                io.to(data.room).emit('drawingStart', data);
                
                io.emit('activeRooms', { activeRooms });
-           }
        });
 
-       socket.on('drawing', (data) => {
-           if (drawingStates[data.room] && drawingStates[data.room].drawing) {
-               drawingStates[data.room] = {
-               drawing: true,
-               lastX: data.x,
-               lastY: data.y,
-               };
-               io.to(data.room).emit('drawing', data);
-               
-               // Store drawing data in roomCanvases
-               roomCanvases[data.room] = roomCanvases[data.room] || [];
-               roomCanvases[data.room].push({ type: 'drawing', data });
-               
-               // Send existing canvas data to the user who starts drawing
-               if (roomCanvases[data.room]) {
-                   io.to(socket.id).emit('restoreCanvas', { canvasData: roomCanvases[data.room] });
-               }
-           }
-           
-               io.emit('activeRooms', { activeRooms });
-           });
+    socket.on('drawing', (data) => {
+        const { room, userId } = data; // Ensure 'userId' is included in the data
+
+        // Check if drawingStates for the room and user exist
+        if (drawingStates[room] && drawingStates[room][userId]) {
+            // Update the user's drawing state with the new coordinates
+            drawingStates[room][userId].lastX = data.x;
+            drawingStates[room][userId].lastY = data.y;
+
+            // Emit the drawing data to all clients in the room, not just the drawer
+            io.to(room).emit('drawing', data);
+
+            // Store drawing data in roomCanvases
+            roomCanvases[room] = roomCanvases[room] || [];
+            roomCanvases[room].push({ type: 'drawing', data });
+        }
+    });
 
        socket.on('drawingEnd', (data) => {
            if (drawingStates[data.room] && drawingStates[data.room].drawing) {
@@ -194,45 +196,47 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        const user = users[socket.id];
-        if (user) {
+            const user = users[socket.id];
+            if (user && drawingStates[user.room]) {
+                delete drawingStates[user.room][socket.id]; // Clean up user's drawing state
+                // Proceed with the rest of your disconnect logic...
             if (activeRooms.includes(user.room)) {
                 // Decrement the user count for the left room
                 activeRooms[user.room] = (activeRooms[user.room] || 0) - 1;
-
+                
                 // Emit the updated user count to all clients in the room
                 io.to(user.room).emit('activeUsersCount', { room: user.room, count: activeRooms[user.room] });
-
+                
                 // Remove the room from activeRooms if there are no users
                 if (activeRooms[user.room] <= 0) {
                     activeRooms = activeRooms.filter(room => room !== user.room);
-
+                    
                     roomCanvases[user.room] = [];
                     chatMessages[user.room] = [];
                 } else {
                     // Check if user.room is defined before emitting the message
                     if (user.room) {
                         io.to(user.room).emit('message', {
-                            username: 'System',
-                            color: 'white',
-                            message: `<span style="color: ${user.color}">${user.username}</span> has left the room.`,
+                        username: 'System',
+                        color: 'white',
+                        message: `<span style="color: ${user.color}">${user.username}</span> has left the room.`,
                         });
-
+                        
                         // Store the system message for future users
                         const systemMessage = {
-                            username: 'System',
-                            color: 'white',
-                            message: `<span style="color: ${user.color}">${user.username}</span> has left the room.`,
+                        username: 'System',
+                        color: 'white',
+                        message: `<span style="color: ${user.color}">${user.username}</span> has left the room.`,
                         };
-
+                        
                         chatMessages[user.room] = chatMessages[user.room] || [];
                         chatMessages[user.room].push(systemMessage);
                     }
                 }
             }
-
+            
             io.emit('activeRooms', { activeRooms });
-
+            
             delete users[socket.id];
         }
     });
