@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 function App() {
   let canvas, ctx, drawing, lastX, lastY;
 
+    /*
   const initializeCanvas = () => {
     canvas = document.getElementById('canvas');
     if (!canvas) return;
@@ -52,8 +53,8 @@ function App() {
     //e.preventDefault();
     const rect = canvas.getBoundingClientRect();
     [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
-    ctx.beginPath();
-    ctx.moveTo(lastX, lastY);
+    //ctx.beginPath();
+    //ctx.moveTo(lastX, lastY);
     drawing = true;
   };
 
@@ -65,10 +66,10 @@ function App() {
 
     ctx.strokeStyle = '#000000'; // Set the stroke color (modify as needed)
     ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(lastX, lastY);
-    ctx.lineTo(x, y);
-    ctx.stroke();
+    //ctx.beginPath();
+    //ctx.moveTo(lastX, lastY);
+    //ctx.lineTo(x, y);
+    //ctx.stroke();
 
     [lastX, lastY] = [x, y];
   };
@@ -77,6 +78,7 @@ function App() {
     drawing = false;
   };
     
+     */
   return (
     <div className="App">
     </div>

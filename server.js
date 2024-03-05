@@ -33,16 +33,41 @@ let activeRooms = [];
 const roomCanvases = {}; // Store canvas state for each room
 const drawingStates = {};  // Declare drawingStates variable here
 const chatMessages = {};
+const activeUsers = {};
 
 let isDrawing = false;
 
+const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
+
 io.on('connection', (socket) => {
+    
+    activeUsers[socket.id] = Date.now();
+    
+    // Function to check and handle inactivity
+    const checkInactivity = () => {
+        const now = Date.now();
+        const lastActivity = activeUsers[socket.id];
+        if (now - lastActivity > INACTIVITY_TIMEOUT) {
+            // User has been inactive for more than 10 minutes
+            // Emit a message to the client about being kicked for being AFK
+            socket.emit('kickedForAFK', { message: 'You have been kicked for being inactive.' });
+
+            // Redirect the user to multipaint.net or the main menu
+            socket.emit('redirect', { url: 'https://multipaint.net' }); // Change the URL as needed
+
+            // Disconnect the socket
+            socket.disconnect(true);
+        }
+    };
+    
     socket.on('join', (data) => {
         const { room, username, color } = data;
 
         socket.join(room);
 
         users[socket.id] = { username, color, room };
+        
+        activeUsers[socket.id] = Date.now();
 
         if (!activeRooms.includes(room)) {
             activeRooms.push(room);
@@ -99,11 +124,16 @@ io.on('connection', (socket) => {
     socket.on('message', (data) => {
         io.to(data.room).emit('message', data);
         io.emit('activeRooms', { activeRooms });
-
+        
         // Store chat messages for each room
         chatMessages[data.room] = chatMessages[data.room] || [];
         chatMessages[data.room].push(data);
+        
+        // Update user's last activity timestamp when they send a message
+        activeUsers[socket.id] = Date.now();
     });
+    
+    const inactivityCheckInterval = setInterval(checkInactivity, 1000); // Check every second
     
     socket.on('drawingStart', (data) => {
             const { room, userId } = data; // Assume `userId` is passed in `data`
@@ -140,6 +170,8 @@ io.on('connection', (socket) => {
 
             // Emit the drawing data to all clients in the room, not just the drawer
             io.to(room).emit('drawing', data);
+            
+            io.emit('activeRooms', { activeRooms });
 
             // Store drawing data in roomCanvases
             roomCanvases[room] = roomCanvases[room] || [];
@@ -209,7 +241,7 @@ io.on('connection', (socket) => {
                 
                 // Remove the room from activeRooms if there are no users
                 if (activeRooms[user.room] <= 0) {
-                    activeRooms = activeRooms.filter(room => room !== user.room);
+                    activeRooms = activeRooms.filter((room) => room !== user.room);
                     
                     roomCanvases[user.room] = [];
                     chatMessages[user.room] = [];
@@ -239,6 +271,10 @@ io.on('connection', (socket) => {
             
             delete users[socket.id];
         }
+        
+        // Remove the user from the activeUsers object upon disconnection
+        delete activeUsers[socket.id];
+        clearInterval(inactivityCheckInterval); // Clear the inactivity check interval
     });
     
     });
