@@ -216,6 +216,7 @@
         let color = '';
         let activeRooms = {};  // Initialize activeRooms as an empty object
         let activeRoomsVar = [];  // Initialize activeRooms as an empty object
+        const drawingHistory = {};
         
         let mostRecentUserJoinTimestamp = 0;
         let mostRecentUser = '';
@@ -294,7 +295,7 @@
             // Your logic for restoring canvas data goes here
             // For example, you might want to emit the 'restoreCanvas' event to the server
             // with the appropriate data, and handle it on the server-side
-            socket.emit('restoreCanvas', {ctx});
+            socket.emit('restoreCanvas', { ctx });
         };
 
         const updateSettings = () => {
@@ -392,11 +393,12 @@
         function startDrawing(e) {
             const rect = canvas.getBoundingClientRect();
             drawing = true;
-            // Update lastX and lastY when drawing starts
             lastX = e.clientX - rect.left;
             lastY = e.clientY - rect.top;
-            
-            // Emit drawing start to others in the room
+
+            // Store the starting point of the drawing for the current user
+            drawingHistory[username] = [{ x: lastX, y: lastY }];
+
             sendMessage('drawingStart', { startX: lastX, startY: lastY });
         }
 
@@ -413,19 +415,22 @@
             ctx.lineTo(x, y);
             ctx.stroke();
 
-            // Update lastX and lastY after drawing
             lastX = x;
             lastY = y;
 
-            // Emit drawing data to others in the room
+            // Store the intermediate points of the drawing for the current user
+            drawingHistory[username].push({ x, y });
+
             sendMessage('drawing', { x, y, color });
         }
 
         function stopDrawing() {
             if (!drawing) return;
             drawing = false;
-            
-            // Emit drawing end to others in the room
+
+            // Clear the drawing history for the current user when drawing stops
+            delete drawingHistory[username];
+
             sendMessage('drawingEnd', {});
         }
         
@@ -437,7 +442,8 @@
             e.preventDefault(); // Prevent default touch event behavior
             const touch = e.touches[0];
             const rect = canvas.getBoundingClientRect(); // Define rect here
-            [touchStartX, touchStartY] = [touch.clientX - rect.left, touch.clientY - rect.top];
+            touchStartX = touch.clientX - rect.left;
+            touchStartY = touch.clientY - rect.top;
 
             ctx.beginPath();
             ctx.moveTo(touchStartX, touchStartY);
@@ -451,16 +457,14 @@
             e.preventDefault(); // Prevent default touch event behavior
             const touch = e.touches[0];
             const rect = canvas.getBoundingClientRect(); // Define rect here
-            const [x, y] = [touch.clientX - rect.left, touch.clientY - rect.top];
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
 
             // Draw a line from the last position to the current position
             ctx.strokeStyle = color;
             ctx.lineWidth = 2;
             ctx.lineTo(x, y);
             ctx.stroke();
-
-            // Update the last position
-            [touchStartX, touchStartY] = [x, y];
 
             // Emit drawing data to others in the room
             sendMessage('drawing', { x, y, color });
@@ -475,11 +479,15 @@
             sendMessage('drawingEnd', {});
         }
         
+        // Function to clear drawing history when the canvas is cleared
         function clearCanvas() {
-            // Clear the canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Emit clear canvas to others in the room
+            // Clear drawing history for all users
+            for (const user in drawingHistory) {
+                delete drawingHistory[user];
+            }
+
             sendMessage('clearCanvas', {});
         }
 
@@ -496,7 +504,7 @@
             messagesContainer.scrollTop(messagesContainer.prop('scrollHeight'));
         }
 
-        // Listen for drawing events from other users
+        /*
         socket.on('drawingStart', function (data) {
             [lastX, lastY] = [data.startX, data.startY];
             ctx.beginPath();
@@ -519,6 +527,7 @@
         socket.on('drawingEnd', function () {
             drawing = false;
         });
+         */
 
         socket.on('clearCanvas', function () {
             // Clear the canvas
