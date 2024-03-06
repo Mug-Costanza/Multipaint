@@ -395,10 +395,10 @@
             drawing = true;
             lastX = e.clientX - rect.left;
             lastY = e.clientY - rect.top;
-            
+
             // Store the starting point of the drawing for the current user
             drawingHistory[username] = [{ x: lastX, y: lastY }];
-            
+
             sendMessage('drawingStart', { startX: lastX, startY: lastY });
         }
 
@@ -427,10 +427,10 @@
         function stopDrawing() {
             if (!drawing) return;
             drawing = false;
-            
+
             // Clear the drawing history for the current user when drawing stops
             delete drawingHistory[username];
-            
+
             sendMessage('drawingEnd', {});
         }
         
@@ -504,7 +504,7 @@
             messagesContainer.scrollTop(messagesContainer.prop('scrollHeight'));
         }
 
-        // Listen for drawing events from other users
+        /*
         socket.on('drawingStart', function (data) {
             [lastX, lastY] = [data.startX, data.startY];
             ctx.beginPath();
@@ -527,6 +527,7 @@
         socket.on('drawingEnd', function () {
             drawing = false;
         });
+         */
 
         socket.on('clearCanvas', function () {
             // Clear the canvas
