@@ -504,7 +504,6 @@
             messagesContainer.scrollTop(messagesContainer.prop('scrollHeight'));
         }
 
-        /*
         socket.on('drawingStart', function (data) {
             [lastX, lastY] = [data.startX, data.startY];
             ctx.beginPath();
@@ -521,13 +520,12 @@
             ctx.stroke();
 
             // Update the last position
-            [lastX, lastY] = [x, y];
+            //[lastX, lastY] = [x, y];
         });
 
         socket.on('drawingEnd', function () {
             drawing = false;
         });
-         */
 
         socket.on('clearCanvas', function () {
             // Clear the canvas
