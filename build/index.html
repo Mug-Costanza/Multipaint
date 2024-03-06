@@ -505,9 +505,9 @@
         }
 
         socket.on('drawingStart', function (data) {
-            [lastX, lastY] = [data.startX, data.startY];
+            //[lastX, lastY] = [data.startX, data.startY];
             ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
+            //ctx.moveTo(lastX, lastY);
         });
 
         socket.on('drawing', function (data) {
