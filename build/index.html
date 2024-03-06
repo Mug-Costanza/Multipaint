@@ -483,6 +483,10 @@
             ctx.lineTo(x, y);
             ctx.stroke();
 
+            // Update the last position
+            lastX = x;
+            lastY = y;
+
             // Emit drawing data to others in the room
             sendMessage('drawing', { x, y, color });
         }
