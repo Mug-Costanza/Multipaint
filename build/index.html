@@ -223,6 +223,8 @@
         
         let isFirstUser = false;
         
+        let lastServerX, lastServerY;
+        
         function setCookie(name, value, days) {
             const expires = new Date();
             expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
@@ -503,13 +505,39 @@
             // Scroll messages up when a new message is added
             messagesContainer.scrollTop(messagesContainer.prop('scrollHeight'));
         }
+        
+        // Function to handle drawing from server data
+        function drawFromServer(data) {
+            const [x, y] = [data.x, data.y];
+
+            // Draw a line from the last server-sent position to the current position
+            ctx.strokeStyle = data.color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(lastServerX, lastServerY); // Move to the last server-sent position
+            ctx.lineTo(x, y); // Draw a line to the current position
+            ctx.stroke();
+
+            // Update the last server-sent position
+            lastServerX = x;
+            lastServerY = y;
+        }
+
+        // Socket event to receive drawing data from the server
+        socket.on('drawing', function (data) {
+            drawFromServer(data);
+        });
 
         socket.on('drawingStart', function (data) {
             //[lastX, lastY] = [data.startX, data.startY];
-            ctx.beginPath();
+            //ctx.beginPath();
             //ctx.moveTo(lastX, lastY);
+            
+            lastServerX = data.startX;
+            lastServerY = data.startY;
         });
 
+        /*
         socket.on('drawing', function (data) {
             const [x, y] = [data.x, data.y];
 
@@ -522,9 +550,10 @@
             // Update the last position
             //[lastX, lastY] = [x, y];
         });
-
+        */
+        
         socket.on('drawingEnd', function () {
-            drawing = false;
+            //drawing = false;
         });
 
         socket.on('clearCanvas', function () {
