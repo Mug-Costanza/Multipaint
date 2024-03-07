@@ -1,26 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Multipaint</title>
-    <meta content="Multipaint" property="og:title" />
-    <meta content="A collaborative drawing tool." property="og:description" />
-    <meta content="https://multipaint.net" property="og:url" />
-    <meta content="%PUBLIC_URL%/favicon.ico" property="og:image" />
-    <meta content="rainbow" name="theme-color" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+        <title>Multipaint</title>
+        <meta content="Multipaint" property="og:title" />
+        <meta content="A collaborative drawing tool." property="og:description" />
+        <meta content="https://multipaint.net" property="og:url" />
+        <meta content="%PUBLIC_URL%/favicon.ico" property="og:image" />
+        <meta content="rainbow" name="theme-color" />
 
-    <style>
-        /* Define rainbow gradient */
-        :root {
-          --rainbow: linear-gradient(to right, violet, indigo, blue, green, yellow, orange, red);
-        }
+        <style>
+            /* Define rainbow gradient */
+            :root {
+              --rainbow: linear-gradient(to right, violet, indigo, blue, green, yellow, orange, red);
+            }
 
-        /* Apply rainbow gradient to theme-color meta tag */
-        meta[name="theme-color"] {
-          content: var(--rainbow);
-        }
+            /* Apply rainbow gradient to theme-color meta tag */
+            meta[name="theme-color"] {
+              background: var(--rainbow); /* changed 'content' to 'background' */
+            }
         
         body {
             background-color: #121212; /* Dark background color */
