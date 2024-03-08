@@ -135,30 +135,33 @@ io.on('connection', (socket) => {
     
     const inactivityCheckInterval = setInterval(checkInactivity, 1000); // Check every second
     
+    // Modify the 'drawingStart' event handler
     socket.on('drawingStart', (data) => {
-            const { room, userId } = data; // Assume `userId` is passed in `data`
+        const { room, userId } = data; // Assume `userId` is passed in `data`
 
-            // Initialize the room if it doesn't exist
-            if (!drawingStates[room]) {
-                drawingStates[room] = {};
-            }
+        // Initialize the room if it doesn't exist
+        if (!drawingStates[room]) {
+            drawingStates[room] = {};
+        }
 
-            // Initialize the user's drawing state in the room
-            drawingStates[room][userId] = {
-                drawing: true,
-                lastX: data.startX,
-                lastY: data.startY,
-            };
-               
-               // Store drawing data in roomCanvases including start color
-               roomCanvases[data.room] = roomCanvases[data.room] || [];
-               roomCanvases[data.room].push({ type: 'drawingStart', data });
-               
-               io.to(data.room).emit('drawingStart', data);
-               
-               io.emit('activeRooms', { activeRooms });
-       });
+        // Initialize the user's drawing state in the room
+        drawingStates[room][userId] = {
+            drawing: true,
+            lastX: data.startX,
+            lastY: data.startY,
+        };
 
+        // Store drawing data in roomCanvases including start color
+        roomCanvases[data.room] = roomCanvases[data.room] || [];
+        roomCanvases[data.room].push({ type: 'drawingStart', data });
+
+        // Emit the drawing data to all clients in the room, not just the drawer
+        io.to(room).emit('drawingStart', data);
+
+        io.emit('activeRooms', { activeRooms });
+    });
+
+    // Modify the 'drawing' event handler
     socket.on('drawing', (data) => {
         const { room, userId } = data; // Ensure 'userId' is included in the data
 
@@ -170,7 +173,7 @@ io.on('connection', (socket) => {
 
             // Emit the drawing data to all clients in the room, not just the drawer
             io.to(room).emit('drawing', data);
-            
+
             io.emit('activeRooms', { activeRooms });
 
             // Store drawing data in roomCanvases
@@ -179,28 +182,25 @@ io.on('connection', (socket) => {
         }
     });
 
-       socket.on('drawingEnd', (data) => {
-           if (drawingStates[data.room] && drawingStates[data.room].drawing) {
-               drawingStates[data.room].drawing = false;
-               io.to(data.room).emit('drawingEnd', data);
-               
-               // Store drawing data in roomCanvases
-               roomCanvases[data.room] = roomCanvases[data.room] || [];
-               roomCanvases[data.room].push({ type: 'drawingEnd', data });
+    // Modify the 'drawingEnd' event handler
+    socket.on('drawingEnd', (data) => {
+        if (drawingStates[data.room] && drawingStates[data.room][data.userId]) {
+            drawingStates[data.room][data.userId].drawing = false;
+            io.to(data.room).emit('drawingEnd', data);
 
-               // Clear the drawing data for the specific user and room
-               drawingStates[data.room] = {
-                   drawing: false,
-                   lastX: 0,
-                   lastY: 0,
-               };
-           }
+            // Store drawing data in roomCanvases
+            roomCanvases[data.room] = roomCanvases[data.room] || [];
+            roomCanvases[data.room].push({ type: 'drawingEnd', data });
 
-           // Set isDrawing to false after the user stops drawing
-           isDrawing = false;
+            // Clear the drawing data for the specific user and room
+            delete drawingStates[data.room][data.userId];
+        }
 
-           io.emit('activeRooms', { activeRooms });
-       });
+        // Set isDrawing to false after the user stops drawing
+        isDrawing = false;
+
+        io.emit('activeRooms', { activeRooms });
+    });
     
     // Modify the 'clearCanvas' event handler
     socket.on('clearCanvas', (data) => {

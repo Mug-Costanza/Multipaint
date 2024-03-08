@@ -228,11 +228,6 @@
         let activeRoomsVar = [];  // Initialize activeRooms as an empty object
         const drawingHistory = {};
         
-        let mostRecentUserJoinTimestamp = 0;
-        let mostRecentUser = '';
-        
-        let isFirstUser = false;
-        
         let lastServerX, lastServerY;
         
         function setCookie(name, value, days) {
@@ -331,18 +326,6 @@
             
             $('#messages').width("400px");
             $('#messages').css('padding', '10px');
-            
-            // Check if the current user is the most recently-joined user
-            if (isFirstUser) {
-                // Show the public room toggle for the most recently-joined user
-                $('#publicToggleLabel').show();
-                $('#publicToggle').show();
-            }
-            else
-            {
-                $('#publicOrPrivateText').show();
-                publicOrPrivateText.textContent = 'Public Room';
-            }
             
             // Enable message input and button
             enableMessageInput();
@@ -454,49 +437,48 @@
         // Variables to store touch start coordinates
         let touchStartX, touchStartY;
 
-        // Function to handle touch start
         function handleTouchStart(e) {
-            e.preventDefault(); // Prevent default touch event behavior
-            const touch = e.touches[0];
-            const rect = canvas.getBoundingClientRect(); // Define rect here
-            lastX = touch.clientX - rect.left;
-            lastY = touch.clientY - rect.top;
+            e.preventDefault(); // Prevent scrolling when touching the canvas
+            const touch = e.touches[0]; // Get the first touch event
+            const rect = canvas.getBoundingClientRect(); // Get the canvas position and size
+            drawing = true; // Set drawing to true
+            lastX = touch.clientX - rect.left; // Calculate the X position relative to the canvas
+            lastY = touch.clientY - rect.top; // Calculate the Y position relative to the canvas
 
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-
-            // Emit drawing start to others in the room
+            // Similar to the mouse start, we can emit the drawingStart event
             sendMessage('drawingStart', { startX: lastX, startY: lastY });
         }
 
-        // Function to handle touch move
         function handleTouchMove(e) {
-            e.preventDefault(); // Prevent default touch event behavior
-            const touch = e.touches[0];
-            const rect = canvas.getBoundingClientRect(); // Define rect here
-            const x = touch.clientX - rect.left;
-            const y = touch.clientY - rect.top;
+            if (!drawing) return; // If we are not drawing, exit the function
+            e.preventDefault(); // Prevent scrolling when touching the canvas
+            const touch = e.touches[0]; // Get the first touch event
+            const rect = canvas.getBoundingClientRect(); // Get the canvas position and size
+            const x = touch.clientX - rect.left; // Calculate the X position relative to the canvas
+            const y = touch.clientY - rect.top; // Calculate the Y position relative to the canvas
 
-            // Draw a line from the last position to the current position
+            // Drawing logic
             ctx.strokeStyle = color;
             ctx.lineWidth = 2;
-            ctx.lineTo(x, y);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY); // Move to the last position
+            ctx.lineTo(x, y); // Draw a line to the new position
             ctx.stroke();
 
-            // Update the last position
+            // Update the last position for the next movement
             lastX = x;
             lastY = y;
 
-            // Emit drawing data to others in the room
+            // Emit the drawing data to other users
             sendMessage('drawing', { x, y, color });
         }
 
-        // Function to handle touch end
         function handleTouchEnd(e) {
-            e.preventDefault(); // Prevent default touch event behavior
-            drawing = false;
+            e.preventDefault(); // Prevent additional actions on touch end
+            if (!drawing) return; // If we are not drawing, exit the function
+            drawing = false; // Stop drawing
 
-            // Emit drawing end to others in the room
+            // Emit the drawingEnd event
             sendMessage('drawingEnd', {});
         }
         
@@ -580,6 +562,7 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         });
 
+        // Modify the socket.on('userJoin') function to check if the user is the least-recently-joined user
         socket.on('userJoin', function (data) {
             // Increment the user count for the joined room
             activeRooms[data.room] = (activeRooms[data.room] || 0) + 1;
@@ -592,6 +575,9 @@
             if (currentTime > mostRecentUserJoinTimestamp) {
                 mostRecentUserJoinTimestamp = currentTime;
                 mostRecentUser = data.username;
+                isLeastRecentUser = true; // Update the variable to indicate that the user is the least-recently-joined user
+            } else {
+                isLeastRecentUser = false; // Reset the variable if the user is not the least-recently-joined user
             }
 
             // Check if there were previously no users in the room
@@ -707,10 +693,14 @@
             const codeLength = 6; // Adjust the length of the generated room code if needed
             let roomCode = '';
 
-            for (let i = 0; i < codeLength; i++) {
-                const randomIndex = Math.floor(Math.random() * characters.length);
-                roomCode += characters.charAt(randomIndex);
-            }
+            do {
+                // Generate a random room code
+                roomCode = '';
+                for (let i = 0; i < codeLength; i++) {
+                    const randomIndex = Math.floor(Math.random() * characters.length);
+                    roomCode += characters.charAt(randomIndex);
+                }
+            } while (activeRooms.hasOwnProperty(roomCode)); // Check if the code already exists in activeRooms
 
             return roomCode;
         }
@@ -763,11 +753,13 @@
         // Update the function to show public/private text instead of the toggle button
         function updatePublicOrPrivateText(isPublic) {
             const publicOrPrivateText = document.getElementById('publicOrPrivateText');
+            
             if (isPublic) {
                 publicOrPrivateText.textContent = 'Public Room'; // Display text for public room
             } else {
                 publicOrPrivateText.textContent = 'Private Room'; // Display text for private room
             }
+            
             publicOrPrivateText.style.display = 'block'; // Show the text
         }
     </script>
