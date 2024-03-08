@@ -92,14 +92,15 @@ io.on('connection', (socket) => {
             });
         }
 
-        // Initialize drawing state for the room
-        if (!drawingStates[room]) {
-            drawingStates[room] = {
-                drawing: false,
-                lastX: 0,
-                lastY: 0,
-            };
-        }
+        // Initialize drawing state for the user in the room
+           if (!drawingStates[data.room]) {
+               drawingStates[data.room] = {};
+           }
+           drawingStates[data.room][socket.id] = {
+               drawing: false,
+               lastX: 0,
+               lastY: 0,
+           };
 
         // Emit the updated user count to all clients in the room
         io.in(room).emit('activeUsersCount', { room, count: activeRooms[room] });
@@ -137,7 +138,7 @@ io.on('connection', (socket) => {
     
     // Modify the 'drawingStart' event handler
     socket.on('drawingStart', (data) => {
-        const { room, userId } = data; // Assume `userId` is passed in `data`
+        const { room, userId } = data;
 
         // Initialize the room if it doesn't exist
         if (!drawingStates[room]) {
@@ -151,19 +152,19 @@ io.on('connection', (socket) => {
             lastY: data.startY,
         };
 
-        // Store drawing data in roomCanvases including start color
-        roomCanvases[data.room] = roomCanvases[data.room] || [];
-        roomCanvases[data.room].push({ type: 'drawingStart', data });
-
-        // Emit the drawing data to all clients in the room, not just the drawer
+        // Emit the drawing data to all clients in the room, including the drawer
         io.to(room).emit('drawingStart', data);
+
+        // Store drawing data in roomCanvases
+        roomCanvases[room] = roomCanvases[room] || [];
+        roomCanvases[room].push({ type: 'drawingStart', data });
 
         io.emit('activeRooms', { activeRooms });
     });
 
     // Modify the 'drawing' event handler
     socket.on('drawing', (data) => {
-        const { room, userId } = data; // Ensure 'userId' is included in the data
+        const { room, userId } = data;
 
         // Check if drawingStates for the room and user exist
         if (drawingStates[room] && drawingStates[room][userId]) {
@@ -171,33 +172,34 @@ io.on('connection', (socket) => {
             drawingStates[room][userId].lastX = data.x;
             drawingStates[room][userId].lastY = data.y;
 
-            // Emit the drawing data to all clients in the room, not just the drawer
+            // Emit the drawing data to all clients in the room, including the drawer
             io.to(room).emit('drawing', data);
-
-            io.emit('activeRooms', { activeRooms });
 
             // Store drawing data in roomCanvases
             roomCanvases[room] = roomCanvases[room] || [];
             roomCanvases[room].push({ type: 'drawing', data });
+
+            io.emit('activeRooms', { activeRooms });
         }
     });
 
     // Modify the 'drawingEnd' event handler
     socket.on('drawingEnd', (data) => {
-        if (drawingStates[data.room] && drawingStates[data.room][data.userId]) {
-            drawingStates[data.room][data.userId].drawing = false;
-            io.to(data.room).emit('drawingEnd', data);
+        const { room, userId } = data;
+
+        if (drawingStates[room] && drawingStates[room][userId]) {
+            drawingStates[room][userId].drawing = false;
+
+            // Emit the drawing end event to all clients in the room, including the drawer
+            io.to(room).emit('drawingEnd', data);
 
             // Store drawing data in roomCanvases
-            roomCanvases[data.room] = roomCanvases[data.room] || [];
-            roomCanvases[data.room].push({ type: 'drawingEnd', data });
+            roomCanvases[room] = roomCanvases[room] || [];
+            roomCanvases[room].push({ type: 'drawingEnd', data });
 
             // Clear the drawing data for the specific user and room
-            delete drawingStates[data.room][data.userId];
+            delete drawingStates[room][userId];
         }
-
-        // Set isDrawing to false after the user stops drawing
-        isDrawing = false;
 
         io.emit('activeRooms', { activeRooms });
     });
