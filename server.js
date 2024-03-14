@@ -15,7 +15,7 @@ app.use(express.static(path.join(__dirname, 'build')));
 
 // Add the privacy route before the catch-all route ('*')
 app.get('/privacy', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'privacy.html'));
+    res.sendFile(path.join(__dirname, 'public', 'privac.html'));
 });
 
 // The '/:room' route
