@@ -136,73 +136,20 @@ io.on('connection', (socket) => {
     
     const inactivityCheckInterval = setInterval(checkInactivity, 1000); // Check every second
     
-    // Modify the 'drawingStart' event handler
     socket.on('drawingStart', (data) => {
-        const { room, userId } = data;
+            const { room, startX, startY } = data;
+            socket.to(room).emit('userDrawingStart', { userId: socket.id, startX, startY });
+        });
 
-        // Initialize the room if it doesn't exist
-        if (!drawingStates[room]) {
-            drawingStates[room] = {};
-        }
+        socket.on('drawing', (data) => {
+            const { room, x, y } = data;
+            socket.to(room).emit('userDrawing', { userId: socket.id, x, y });
+        });
 
-        // Initialize the user's drawing state in the room
-        drawingStates[room][userId] = {
-            drawing: true,
-            lastX: data.startX,
-            lastY: data.startY,
-        };
-
-        // Emit the drawing data to all clients in the room, including the drawer
-        io.to(room).emit('drawingStart', data);
-
-        // Store drawing data in roomCanvases
-        roomCanvases[room] = roomCanvases[room] || [];
-        roomCanvases[room].push({ type: 'drawingStart', data });
-
-        io.emit('activeRooms', { activeRooms });
-    });
-
-    // Modify the 'drawing' event handler
-    socket.on('drawing', (data) => {
-        const { room, userId } = data;
-
-        // Check if drawingStates for the room and user exist
-        if (drawingStates[room] && drawingStates[room][userId]) {
-            // Update the user's drawing state with the new coordinates
-            drawingStates[room][userId].lastX = data.x;
-            drawingStates[room][userId].lastY = data.y;
-
-            // Emit the drawing data to all clients in the room, including the drawer
-            io.to(room).emit('drawing', data);
-
-            // Store drawing data in roomCanvases
-            roomCanvases[room] = roomCanvases[room] || [];
-            roomCanvases[room].push({ type: 'drawing', data });
-
-            io.emit('activeRooms', { activeRooms });
-        }
-    });
-
-    // Modify the 'drawingEnd' event handler
-    socket.on('drawingEnd', (data) => {
-        const { room, userId } = data;
-
-        if (drawingStates[room] && drawingStates[room][userId]) {
-            drawingStates[room][userId].drawing = false;
-
-            // Emit the drawing end event to all clients in the room, including the drawer
-            io.to(room).emit('drawingEnd', data);
-
-            // Store drawing data in roomCanvases
-            roomCanvases[room] = roomCanvases[room] || [];
-            roomCanvases[room].push({ type: 'drawingEnd', data });
-
-            // Clear the drawing data for the specific user and room
-            delete drawingStates[room][userId];
-        }
-
-        io.emit('activeRooms', { activeRooms });
-    });
+        socket.on('drawingEnd', (data) => {
+            const { room } = data;
+            socket.to(room).emit('userDrawingEnd', { userId: socket.id });
+        });
     
     // Modify the 'clearCanvas' event handler
     socket.on('clearCanvas', (data) => {
