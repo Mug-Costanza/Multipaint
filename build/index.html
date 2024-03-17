@@ -508,33 +508,32 @@
         
         // Function to handle drawing from server data
         function drawFromServer(data) {
-            const [x, y] = [data.x, data.y];
+            const { x, y, userId } = data;
 
             // Draw a line from the last server-sent position to the current position
             ctx.strokeStyle = data.color;
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.moveTo(lastServerX, lastServerY); // Move to the last server-sent position
+            ctx.moveTo(lastX, lastY); // Move to the last server-sent position
             ctx.lineTo(x, y); // Draw a line to the current position
             ctx.stroke();
 
             // Update the last server-sent position
-            lastServerX = x;
-            lastServerY = y;
+            lastX = x;
+            lastY = y;
         }
-
+        
         // Socket event to receive drawing data from the server
         socket.on('drawing', function (data) {
             drawFromServer(data);
         });
 
         socket.on('drawingStart', function (data) {
-            //[lastX, lastY] = [data.startX, data.startY];
-            //ctx.beginPath();
-            //ctx.moveTo(lastX, lastY);
-            
-            lastServerX = data.startX;
-            lastServerY = data.startY;
+            const { startX, startY } = data;
+
+            // Update the lastX and lastY variables with the starting coordinates
+            lastX = startX;
+            lastY = startY;
         });
 
         /*
