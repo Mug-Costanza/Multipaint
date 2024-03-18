@@ -145,7 +145,7 @@ io.on('connection', (socket) => {
         drawingStates[room] = drawingStates[room] || {};
         drawingStates[room][socket.id] = {
             drawing: true,
-            path: [{ x: data.startX, y: data.startY }] // Start a new path
+            path: [{ x: data.startX[socket.id], y: data.startY[socket.id] }] // Start a new path
         };
 
         // Emit the drawing start event to all clients in the room
@@ -165,7 +165,7 @@ io.on('connection', (socket) => {
 
         // Update the drawing path for the current user
         if (drawingStates[room] && drawingStates[room][socket.id] && drawingStates[room][socket.id].drawing) {
-            drawingStates[room][socket.id].path.push({ x: data.x, y: data.y });
+            drawingStates[room][socket.id].path.push({ x: data.x[socket.id], y: data.y[socket.id] });
         }
 
         // Emit the drawing event to all clients in the room
