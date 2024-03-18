@@ -150,16 +150,17 @@ io.on('connection', (socket) => {
         io.emit('activeRooms', { activeRooms });
     });
 
-    // Modify the 'drawing' event handler
     socket.on('drawing', (data) => {
         const { room } = data;
+        // Append the socket ID to uniquely identify this drawing action
+        const drawingData = { ...data, userId: socket.id };
 
-        // Emit the drawing event to all clients in the room
-        io.to(room).emit('drawing', data);
+        // Emit the drawing event to all clients in the room with the user ID
+        io.to(room).emit('drawing', drawingData);
 
-        // Store drawing data in roomCanvases
+        // Store drawing data in roomCanvases, include userId in the stored data
         roomCanvases[room] = roomCanvases[room] || [];
-        roomCanvases[room].push({ type: 'drawing', data });
+        roomCanvases[room].push({ type: 'drawing', data: drawingData });
 
         io.emit('activeRooms', { activeRooms });
     });
