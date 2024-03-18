@@ -389,49 +389,57 @@
             toggleChat();
         });
 
-        function startDrawing(e) {
-            const rect = canvas.getBoundingClientRect();
-            drawing = true;
-            lastX = e.clientX - rect.left;
-            lastY = e.clientY - rect.top;
+        // Modify the startDrawing function
+            function startDrawing(e) {
+                const rect = canvas.getBoundingClientRect();
+                drawing = true;
+                lastX = e.clientX - rect.left;
+                lastY = e.clientY - rect.top;
 
-            // Store the starting point of the drawing for the current user
-            drawingHistory[username] = [{ x: lastX, y: lastY }];
+                // Store the starting point of the drawing for the current user
+                drawingHistory[username] = [{ x: lastX, y: lastY }];
 
-            sendMessage('drawingStart', { startX: lastX, startY: lastY });
-        }
+                // Emit the 'drawingStart' event with room and start coordinates
+                socket.emit('drawingStart', { room, startX: lastX, startY: lastY });
+            }
 
-        function draw(e) {
-            if (!drawing) return;
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            // Modify the draw function
+            function draw(e) {
+                if (!drawing) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
 
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(x, y);
-            ctx.stroke();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
 
-            lastX = x;
-            lastY = y;
+                // Get the drawing path specific to the current user
+                const path = drawingHistory[username];
 
-            // Store the intermediate points of the drawing for the current user
-            drawingHistory[username].push({ x, y });
+                // Draw from the last point in the path to the current point
+                ctx.moveTo(path[path.length - 1].x, path[path.length - 1].y);
+                ctx.lineTo(x, y);
+                ctx.stroke();
 
-            sendMessage('drawing', { x, y, color });
-        }
+                // Update the last point in the path
+                path.push({ x, y });
 
-        function stopDrawing() {
-            if (!drawing) return;
-            drawing = false;
+                // Emit the 'drawing' event with current coordinates and room information
+                socket.emit('drawing', { room, x, y, color });
+            }
 
-            // Clear the drawing history for the current user when drawing stops
-            delete drawingHistory[username];
+            // Modify the stopDrawing function
+            function stopDrawing() {
+                if (!drawing) return;
+                drawing = false;
 
-            sendMessage('drawingEnd', {});
-        }
+                // Clear the drawing history for the current user when drawing stops
+                delete drawingHistory[username];
+
+                // Emit the 'drawingEnd' event with room information
+                socket.emit('drawingEnd', { room });
+            }
         
         // Variables to store touch start coordinates
         let touchStartX, touchStartY;
