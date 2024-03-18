@@ -139,6 +139,14 @@ io.on('connection', (socket) => {
     // Modify the 'drawingStart' event handler
     socket.on('drawingStart', (data) => {
         const { room } = data;
+        const user = users[socket.id];
+
+        // Initialize a drawing path for the current user if it doesn't exist
+        drawingStates[room] = drawingStates[room] || {};
+        drawingStates[room][socket.id] = {
+            drawing: true,
+            path: [{ x: data.startX, y: data.startY }] // Start a new path
+        };
 
         // Emit the drawing start event to all clients in the room
         io.to(room).emit('drawingStart', data);
@@ -150,17 +158,22 @@ io.on('connection', (socket) => {
         io.emit('activeRooms', { activeRooms });
     });
 
+    // Modify the 'drawing' event handler
     socket.on('drawing', (data) => {
         const { room } = data;
-        // Append the socket ID to uniquely identify this drawing action
-        const drawingData = { ...data, userId: socket.id };
+        const user = users[socket.id];
 
-        // Emit the drawing event to all clients in the room with the user ID
-        io.to(room).emit('drawing', drawingData);
+        // Update the drawing path for the current user
+        if (drawingStates[room] && drawingStates[room][socket.id] && drawingStates[room][socket.id].drawing) {
+            drawingStates[room][socket.id].path.push({ x: data.x, y: data.y });
+        }
 
-        // Store drawing data in roomCanvases, include userId in the stored data
+        // Emit the drawing event to all clients in the room
+        io.to(room).emit('drawing', data);
+
+        // Store drawing data in roomCanvases
         roomCanvases[room] = roomCanvases[room] || [];
-        roomCanvases[room].push({ type: 'drawing', data: drawingData });
+        roomCanvases[room].push({ type: 'drawing', data });
 
         io.emit('activeRooms', { activeRooms });
     });
@@ -168,6 +181,12 @@ io.on('connection', (socket) => {
     // Modify the 'drawingEnd' event handler
     socket.on('drawingEnd', (data) => {
         const { room } = data;
+        const user = users[socket.id];
+
+        // Clear the drawing path for the current user
+        if (drawingStates[room] && drawingStates[room][socket.id]) {
+            delete drawingStates[room][socket.id];
+        }
 
         // Emit the drawing end event to all clients in the room
         io.to(room).emit('drawingEnd', data);
@@ -197,7 +216,6 @@ io.on('connection', (socket) => {
             });
         }
     });
-
 
     socket.on('activeRooms', function (data) {
         activeRooms = data.activeRooms;
