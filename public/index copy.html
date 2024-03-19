@@ -149,15 +149,6 @@
             font-weight: bold; /* Adjusted the font-weight property */
             font-size: 16px;
         }
-            
-        .cursor {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background-image: url('cursor-icon.png'); /* Example cursor icon */
-            background-size: cover;
-            pointer-events: none; /* Make the cursor click-through */
-        }
     </style>
 </head>
 <body>
@@ -234,11 +225,7 @@
         let color = '';
         let activeRooms = {};  // Initialize activeRooms as an empty object
         let activeRoomsVar = [];  // Initialize activeRooms as an empty object
-        //const drawingHistory = {};
-        let lastPositions = {};
-        let drawingHistory = []; // Stores the drawing actions
-        let redoStack = []; // Stores actions for redo
-        let cursors = {}; // Object to track cursors of other users
+        const drawingHistory = {};
         
         let lastServerX, lastServerY;
         
@@ -399,13 +386,6 @@
             canvas.addEventListener('touchmove', handleTouchMove);
             canvas.addEventListener('touchend', handleTouchEnd);
             
-            canvas.addEventListener('mousemove', (event) => {
-                const rect = canvas.getBoundingClientRect();
-                const x = event.clientX - rect.left;
-                const y = event.clientY - rect.top;
-                socket.emit('cursorMove', { room, userId: socket.id, position: { x, y } });
-            });
-            
             toggleChat();
         });
 
@@ -534,52 +514,54 @@
             messagesContainer.scrollTop(messagesContainer.prop('scrollHeight'));
         }
         
-        // Initialize an object to hold drawing histories for each user
-        let userDrawingHistories = {};
-
-        // Modify the drawFromServer function to handle drawing for individual users
+        // Function to handle drawing from server data
         function drawFromServer(data) {
-            const userId = data.userId; // Unique identifier for the user
+            const [x, y] = [data.x, data.y];
 
-            if (!userDrawingHistories[userId]) {
-                // Initialize the drawing history for this user if it doesn't exist
-                userDrawingHistories[userId] = [];
-            }
+            // Draw a line from the last server-sent position to the current position
+            ctx.strokeStyle = data.color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(lastServerX, lastServerY); // Move to the last server-sent position
+            ctx.lineTo(x, y); // Draw a line to the current position
+            ctx.stroke();
 
-            const userHistory = userDrawingHistories[userId];
-
-            if (data.isStart) {
-                // If this is the start of a new line, add a new path array to the user's history
-                userHistory.push([{ x: data.x, y: data.y }]);
-            } else if (data.isEnd) {
-                // If this is the end of a line, simply push the end point to the current path
-                // and mark the current path as complete in some manner if needed
-                userHistory[userHistory.length - 1].push({ x: data.x, y: data.y });
-            } else {
-                // For ongoing lines, continue adding points to the current path
-                userHistory[userHistory.length - 1].push({ x: data.x, y: data.y });
-
-                // Draw the line segment
-                const lastPoint = userHistory[userHistory.length - 1].slice(-2);
-                ctx.beginPath();
-                ctx.moveTo(lastPoint[0].x, lastPoint[0].y);
-                ctx.lineTo(lastPoint[1].x, lastPoint[1].y);
-                ctx.strokeStyle = data.color;
-                ctx.lineWidth = 2;
-                ctx.stroke();
-            }
+            // Update the last server-sent position
+            lastServerX = x;
+            lastServerY = y;
         }
 
-        // Ensure that the 'drawing', 'drawingStart', and 'drawingEnd' event handlers
-        // send the isStart and isEnd flags appropriately
-        socket.on('drawing', function(data) {
-            drawFromServer({ ...data, isStart: false, isEnd: false });
+        // Socket event to receive drawing data from the server
+        socket.on('drawing', function (data) {
+            drawFromServer(data);
         });
-        socket.on('drawingStart', function(data) {
-            drawFromServer({ ...data, isStart: true });
+
+        socket.on('drawingStart', function (data) {
+            //[lastX, lastY] = [data.startX, data.startY];
+            //ctx.beginPath();
+            //ctx.moveTo(lastX, lastY);
+            
+            lastServerX = data.startX;
+            lastServerY = data.startY;
         });
-        socket.on('drawingEnd', function(data) {
-            drawFromServer({ ...data, isEnd: true });
+
+        /*
+        socket.on('drawing', function (data) {
+            const [x, y] = [data.x, data.y];
+
+            // Draw a line from the last position to the current position
+            ctx.strokeStyle = data.color;
+            ctx.lineWidth = 2;
+            ctx.lineTo(x, y);
+            ctx.stroke();
+
+            // Update the last position
+            //[lastX, lastY] = [x, y];
+        });
+        */
+        
+        socket.on('drawingEnd', function () {
+            //drawing = false;
         });
 
         socket.on('clearCanvas', function () {
@@ -787,47 +769,6 @@
             
             publicOrPrivateText.style.display = 'block'; // Show the text
         }
-        
-        // Functions to undo and redo drawing actions
-        function undoLastAction() {
-            if (drawingHistory.length > 0) {
-                const lastAction = drawingHistory.pop();
-                redoStack.push(lastAction);
-                redrawCanvas();
-            }
-        }
-
-        function redoLastAction() {
-            if (redoStack.length > 0) {
-                const redoAction = redoStack.pop();
-                drawingHistory.push(redoAction);
-                redrawCanvas();
-            }
-        }
-
-        // Redraw the canvas based on the current state of drawingHistory
-        function redrawCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
-            // Iterate over drawingHistory and redraw each action
-            drawingHistory.forEach(action => {
-                // Redrawing logic based on the action type
-                // For example, you might have action types like 'line' with start and end coordinates
-            });
-        }
-        
-        socket.on('cursorMove', (data) => {
-            let cursor = cursors[data.userId];
-            if (!cursor) {
-                // Create a new cursor element if it doesn't exist
-                cursor = document.createElement('div');
-                cursor.classList.add('cursor');
-                document.body.appendChild(cursor);
-                cursors[data.userId] = cursor;
-            }
-            // Update the cursor's position
-            cursor.style.left = `${data.position.x}px`;
-            cursor.style.top = `${data.position.y}px`;
-        });
     </script>
 </body>
 </html>
