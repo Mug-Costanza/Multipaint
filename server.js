@@ -72,6 +72,12 @@ io.on('connection', (socket) => {
         if (!activeRooms.includes(room)) {
             activeRooms.push(room);
         }
+        
+        if (!drawingStates[data.room]) {
+            drawingStates[data.room] = {};
+        }
+        
+        drawingStates[data.room][socket.id] = { drawing: false, lastX: null, lastY: null };
 
         io.emit('activeRooms', { activeRooms });
 
@@ -84,6 +90,14 @@ io.on('connection', (socket) => {
                 io.to(socket.id).emit(item.type, item.data);
             });
         }
+        
+        // Send existing canvas data to the newly joined user
+            if (roomCanvases[room]) {
+                roomCanvases[room].forEach(action => {
+                    // Emit the action to only the newly joined socket
+                    socket.emit(action.type, action.data);
+                });
+            }
 
         // Always send previous chat messages to the newly joined user
         if (chatMessages[data.room]) {
@@ -136,73 +150,67 @@ io.on('connection', (socket) => {
     
     const inactivityCheckInterval = setInterval(checkInactivity, 1000); // Check every second
     
-    // Modify the 'drawingStart' event handler
+    // 'drawingStart' event handler modification
     socket.on('drawingStart', (data) => {
-        const { room } = data;
-        const user = users[socket.id];
+        const { room, startX, startY } = data;
 
-        // Initialize a drawing path for the current user if it doesn't exist
-        drawingStates[room] = drawingStates[room] || {};
-        drawingStates[room][socket.id] = {
-            drawing: true,
-            path: [{ x: data.startX[socket.id], y: data.startY[socket.id] }] // Start a new path
-        };
+        // Ensure the drawing state is correctly initialized for the user and room
+        if (!drawingStates[room]) {
+            drawingStates[room] = {};
+        }
+        drawingStates[room][socket.id] = { drawing: true, path: [{ x: startX, y: startY }] };
 
-        // Emit the drawing start event to all clients in the room
-        io.to(room).emit('drawingStart', data);
-
-        // Store drawing data in roomCanvases
-        roomCanvases[room] = roomCanvases[room] || [];
-        roomCanvases[room].push({ type: 'drawingStart', data });
-
-        io.emit('activeRooms', { activeRooms });
+        // Emit the 'drawingStart' event with user identifier
+        io.to(room).emit('drawingStart', { userId: socket.id, startX, startY });
     });
 
-    // Modify the 'drawing' event handler
     socket.on('drawing', (data) => {
-        const { room } = data;
-        const user = users[socket.id];
+        const { room, x, y, color } = data;
 
-        // Update the drawing path for the current user
-        if (drawingStates[room] && drawingStates[room][socket.id] && drawingStates[room][socket.id].drawing) {
-            drawingStates[room][socket.id].path.push({ x: data.x[socket.id], y: data.y[socket.id] });
+        if (!roomCanvases[room]) {
+            roomCanvases[room] = [];
         }
 
-        // Emit the drawing event to all clients in the room
-        io.to(room).emit('drawing', data);
+        // Append new drawing action to the room's canvas state
+        roomCanvases[room].push({ userId: socket.id, type: 'drawing', data: { x, y, color }});
 
-        // Store drawing data in roomCanvases
-        roomCanvases[room] = roomCanvases[room] || [];
-        roomCanvases[room].push({ type: 'drawing', data });
-
-        io.emit('activeRooms', { activeRooms });
+        // Emit the 'drawing' event with user identifier and drawing data
+        io.to(room).emit('drawing', { userId: socket.id, x, y, color });
     });
 
-    // Modify the 'drawingEnd' event handler
+    // 'drawingEnd' event handler modification
     socket.on('drawingEnd', (data) => {
         const { room } = data;
-        const user = users[socket.id];
 
-        // Clear the drawing path for the current user
+        // Clear the user's drawing state
         if (drawingStates[room] && drawingStates[room][socket.id]) {
             delete drawingStates[room][socket.id];
         }
 
-        // Emit the drawing end event to all clients in the room
-        io.to(room).emit('drawingEnd', data);
+        // Emit the 'drawingEnd' event with user identifier
+        io.to(room).emit('drawingEnd', { userId: socket.id });
+    });
 
-        // Store drawing data in roomCanvases
-        roomCanvases[room] = roomCanvases[room] || [];
-        roomCanvases[room].push({ type: 'drawingEnd', data });
-
-        io.emit('activeRooms', { activeRooms });
+    // 'clearCanvas' event handler (for completeness, though not directly related to multi-user drawing logic)
+    socket.on('clearCanvas', (data) => {
+        const { room } = data;
+        roomCanvases[room] = []; // Clear stored canvas data for the room
+        io.to(room).emit('clearCanvas'); // Notify all clients in the room to clear their canvases
     });
     
-    // Modify the 'clearCanvas' event handler
-    socket.on('clearCanvas', (data) => {
-        // Clear the canvas state for the room
-        roomCanvases[data.room] = [];
-        io.to(data.room).emit('clearCanvas', data);
+    // Example structure for managing undo/redo
+    socket.on('undo', (data) => {
+        const { room, userId } = data;
+        // Logic to undo the last action for the user in the specified room
+        // This could involve popping the last action from the user's stack and re-rendering the canvas for them.
+    });
+
+    socket.on('redo', (data) => {
+        // Similar to undo but for redo actions
+    });
+    
+    socket.on('cursorMove', (data) => {
+        io.to(data.room).emit('cursorMove', { userId: socket.id, position: data.position });
     });
     
     // Add this block to your existing server-side code
