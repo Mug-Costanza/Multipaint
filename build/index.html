@@ -151,12 +151,11 @@
         }
             
         .cursor {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
             position: absolute;
-            width: 20px;
-            height: 20px;
-            background-image: url('cursor-icon.png'); /* Example cursor icon */
-            background-size: cover;
-            pointer-events: none; /* Make the cursor click-through */
+            /* Other styling as needed (e.g., background-color) */
         }
     </style>
 </head>
@@ -420,7 +419,7 @@
                 drawingHistory[username] = [{ x: lastX, y: lastY }];
 
                 // Emit the 'drawingStart' event with room and start coordinates
-                socket.emit('drawingStart', { room, startX: lastX, startY: lastY });
+                socket.emit('drawingStart', { room, startX: lastX, startY: lastY, userId: socket.id });
             }
 
             // Modify the draw function
@@ -445,8 +444,9 @@
                 // Update the last point in the path
                 path.push({ x, y });
 
-                // Emit the 'drawing' event with current coordinates and room information
-                socket.emit('drawing', { room, x, y, color });
+                if (drawing) {
+                    socket.emit('drawing', { room, x, y, color, userId: socket.id });
+                }
             }
 
             // Modify the stopDrawing function
@@ -458,7 +458,10 @@
                 delete drawingHistory[username];
 
                 // Emit the 'drawingEnd' event with room information
-                socket.emit('drawingEnd', { room });
+                if (drawing) {
+                    socket.emit('drawingEnd', { room, userId: socket.id });
+                    drawing = false;
+                }
             }
         
         // Variables to store touch start coordinates
@@ -537,36 +540,44 @@
         // Initialize an object to hold drawing histories for each user
         let userDrawingHistories = {};
 
-        // Modify the drawFromServer function to handle drawing for individual users
         function drawFromServer(data) {
             const userId = data.userId; // Unique identifier for the user
 
+            // Ensure userDrawingHistories is properly initialized for this user
             if (!userDrawingHistories[userId]) {
-                // Initialize the drawing history for this user if it doesn't exist
                 userDrawingHistories[userId] = [];
             }
 
             const userHistory = userDrawingHistories[userId];
 
+            // Guard against attempting to access or modify a path before it's initialized
             if (data.isStart) {
-                // If this is the start of a new line, add a new path array to the user's history
+                // Initialize a new path at the start
                 userHistory.push([{ x: data.x, y: data.y }]);
-            } else if (data.isEnd) {
-                // If this is the end of a line, simply push the end point to the current path
-                // and mark the current path as complete in some manner if needed
-                userHistory[userHistory.length - 1].push({ x: data.x, y: data.y });
             } else {
-                // For ongoing lines, continue adding points to the current path
-                userHistory[userHistory.length - 1].push({ x: data.x, y: data.y });
+                // Ensure there's at least one path initialized before trying to add points or mark the end
+                if (userHistory.length === 0) {
+                    // Optionally handle the error, e.g., by initializing a path or logging a warning
+                    console.warn("Attempting to draw or end a line before starting it. Initializing a new path.");
+                    userHistory.push([{ x: data.x, y: data.y }]); // Initialize a path if desired
+                } else {
+                    // Normal operation for adding points to the existing path or marking its end
+                    if (data.isEnd) {
+                        userHistory[userHistory.length - 1].push({ x: data.x, y: data.y });
+                        // console.log("This is the end.");
+                    } else {
+                        userHistory[userHistory.length - 1].push({ x: data.x, y: data.y });
 
-                // Draw the line segment
-                const lastPoint = userHistory[userHistory.length - 1].slice(-2);
-                ctx.beginPath();
-                ctx.moveTo(lastPoint[0].x, lastPoint[0].y);
-                ctx.lineTo(lastPoint[1].x, lastPoint[1].y);
-                ctx.strokeStyle = data.color;
-                ctx.lineWidth = 2;
-                ctx.stroke();
+                        // Draw the line segment
+                        const lastPoint = userHistory[userHistory.length - 1].slice(-2);
+                        ctx.beginPath();
+                        ctx.moveTo(lastPoint[0].x, lastPoint[0].y);
+                        ctx.lineTo(lastPoint[1].x, lastPoint[1].y);
+                        ctx.strokeStyle = data.color;
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                    }
+                }
             }
         }
 
@@ -636,6 +647,13 @@
                             newFirstUser = user;
                         }
                     }
+                    
+                    const cursor = document.getElementById(`cursor-${data.userId}`);
+                    
+                    if (cursor) {
+                        cursor.parentNode.removeChild(cursor);
+                    }
+                    
                     // Update the first user's information
                     firstUserJoinTimestamp = earliestJoinTimestamp;
                     firstUser = newFirstUser;
@@ -815,19 +833,33 @@
             });
         }
         
+        /*
         socket.on('cursorMove', (data) => {
             let cursor = cursors[data.userId];
             if (!cursor) {
                 // Create a new cursor element if it doesn't exist
                 cursor = document.createElement('div');
                 cursor.classList.add('cursor');
+                cursor.setAttribute('id', `cursor-${data.userId}`);
+                cursor.style.position = 'absolute';
+                cursor.style.width = '10px';
+                cursor.style.height = '10px';
+                cursor.style.borderRadius = '50%'; // Makes the cursor a circle
+                cursor.style.pointerEvents = 'none'; // Ensures the cursor doesn't interfere with canvas drawing
                 document.body.appendChild(cursor);
                 cursors[data.userId] = cursor;
             }
-            // Update the cursor's position
-            cursor.style.left = `${data.position.x}px`;
-            cursor.style.top = `${data.position.y}px`;
+            // Calculate the position relative to the canvas or a specific container
+            const rect = ctx.getBoundingClientRect(); // Adjust this if the cursor should align with another element
+
+            cursor.style.left = `${data.position.x - rect.left - cursor.offsetWidth / 2 - 150}px`;
+            cursor.style.top = `${data.position.y - rect.top - cursor.offsetHeight / 2}px`;
+            
+            cursor.style.marginLeft = "-1050px;";
+            // Set the cursor's color
+            cursor.style.backgroundColor = data.color;
         });
+         */
     </script>
 </body>
 </html>

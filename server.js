@@ -16,7 +16,7 @@ app.use(express.static(path.join(__dirname, 'build')));
 // Add the privacy route before the catch-all route ('*')
 app.get('/privacy', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'privacy.html'));
-});
+})
 
 // The '/:room' route
 app.get('/:room', (req, res) => {
@@ -53,7 +53,7 @@ io.on('connection', (socket) => {
             socket.emit('kickedForAFK', { message: 'You have been kicked for being inactive.' });
 
             // Redirect the user to multipaint.net or the main menu
-            socket.emit('redirect', { url: 'https://multipaint.net' }); // Change the URL as needed
+            // socket.emit('redirect', { url: 'https://multipaint.net' }); // Change the URL as needed
 
             // Disconnect the socket
             socket.disconnect(true);
@@ -84,20 +84,13 @@ io.on('connection', (socket) => {
         // Increment the user count for the joined room
         activeRooms[room] = (activeRooms[room] || 0) + 1;
 
-        // Always send existing canvas data to the newly joined user
-        if (roomCanvases[data.room]) {
-            roomCanvases[data.room].forEach((item) => {
-                io.to(socket.id).emit(item.type, item.data);
+        // Send existing canvas data to the newly joined user
+        if (roomCanvases[room]) {
+            roomCanvases[room].forEach(item => {
+                // Emit the action to only the newly joined socket
+                socket.emit(item.type, item.data);
             });
         }
-        
-        // Send existing canvas data to the newly joined user
-            if (roomCanvases[room]) {
-                roomCanvases[room].forEach(action => {
-                    // Emit the action to only the newly joined socket
-                    socket.emit(action.type, action.data);
-                });
-            }
 
         // Always send previous chat messages to the newly joined user
         if (chatMessages[data.room]) {
@@ -158,6 +151,13 @@ io.on('connection', (socket) => {
         if (!drawingStates[room]) {
             drawingStates[room] = {};
         }
+        
+        if (!roomCanvases[room]) {
+            roomCanvases[room] = [];
+        }
+        
+        roomCanvases[room].push({ userId: socket.id, type: 'drawingStart', data: { startX, startY }});
+        
         drawingStates[room][socket.id] = { drawing: true, path: [{ x: startX, y: startY }] };
 
         // Emit the 'drawingStart' event with user identifier
@@ -173,6 +173,8 @@ io.on('connection', (socket) => {
 
         // Append new drawing action to the room's canvas state
         roomCanvases[room].push({ userId: socket.id, type: 'drawing', data: { x, y, color }});
+        
+        io.emit('activeRooms', { activeRooms });
 
         // Emit the 'drawing' event with user identifier and drawing data
         io.to(room).emit('drawing', { userId: socket.id, x, y, color });
@@ -181,14 +183,22 @@ io.on('connection', (socket) => {
     // 'drawingEnd' event handler modification
     socket.on('drawingEnd', (data) => {
         const { room } = data;
-
+        
         // Clear the user's drawing state
         if (drawingStates[room] && drawingStates[room][socket.id]) {
             delete drawingStates[room][socket.id];
         }
+        
+        if (!roomCanvases[room]) {
+            roomCanvases[room] = [];
+        }
+        
+        roomCanvases[room].push({ userId: socket.id, type: 'drawingEnd', data: { x, y, color }});
 
+        drawingStates[room][socket.id] = { drawing: false, path: [{ x: startX, y: startY }] };
+        
         // Emit the 'drawingEnd' event with user identifier
-        io.to(room).emit('drawingEnd', { userId: socket.id });
+        io.to(room).emit('drawingEnd', {  });
     });
 
     // 'clearCanvas' event handler (for completeness, though not directly related to multi-user drawing logic)
@@ -210,16 +220,18 @@ io.on('connection', (socket) => {
     });
     
     socket.on('cursorMove', (data) => {
-        io.to(data.room).emit('cursorMove', { userId: socket.id, position: data.position });
+        const user = users[socket.id];
+        if(user) {
+            io.to(user.room).emit('cursorMove', { userId: socket.id, position: data.position, color: user.color });
+        }
     });
     
-    // Add this block to your existing server-side code
     socket.on('restoreCanvas', (data) => {
         const { room } = data;
-
-        // Send existing canvas data to the user who requests to restore canvas
-        if (roomCanvases[room]) {
+        // Ensure roomCanvases[room] is initialized and not undefined
+        if (roomCanvases[room] && roomCanvases[room].length > 0) {
             roomCanvases[room].forEach((item) => {
+                // Emit each drawing action to the requesting socket
                 io.to(socket.id).emit(item.type, item.data);
             });
         }
@@ -231,10 +243,9 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-            const user = users[socket.id];
-            if (user && drawingStates[user.room]) {
-                delete drawingStates[user.room][socket.id]; // Clean up user's drawing state
-                // Proceed with the rest of your disconnect logic...
+        const user = users[socket.id];
+        if (user && drawingStates[user.room]) {
+            delete drawingStates[user.room][socket.id]; // Clean up user's drawing state
             if (activeRooms.includes(user.room)) {
                 // Decrement the user count for the left room
                 activeRooms[user.room] = (activeRooms[user.room] || 0) - 1;
@@ -242,7 +253,9 @@ io.on('connection', (socket) => {
                 // Emit the updated user count to all clients in the room
                 io.to(user.room).emit('activeUsersCount', { room: user.room, count: activeRooms[user.room] });
                 
-                // Remove the room from activeRooms if there are no users
+                // Emit the 'userLeave' event to all clients in the room to remove the cursor
+                io.to(user.room).emit('userLeave', { userId: socket.id });
+                
                 if (activeRooms[user.room] <= 0) {
                     activeRooms = activeRooms.filter((room) => room !== user.room);
                     
@@ -277,7 +290,7 @@ io.on('connection', (socket) => {
         
         // Remove the user from the activeUsers object upon disconnection
         delete activeUsers[socket.id];
-        clearInterval(inactivityCheckInterval); // Clear the inactivity check interval
+        // No need to clear inactivityCheckInterval here because it is cleared when the socket disconnects
     });
     
     });
