@@ -193,7 +193,7 @@ io.on('connection', (socket) => {
             roomCanvases[room] = [];
         }
         
-        roomCanvases[room].push({ userId: socket.id, type: 'drawingEnd', data: { x, y, color }});
+        roomCanvases[room].push({ userId: socket.id, type: 'drawingEnd', data: {  }});
 
         drawingStates[room][socket.id] = { drawing: false, path: [{ x: startX, y: startY }] };
         
