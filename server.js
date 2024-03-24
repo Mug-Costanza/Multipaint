@@ -195,7 +195,7 @@ io.on('connection', (socket) => {
         
         roomCanvases[room].push({ userId: socket.id, type: 'drawingEnd', data: {  }});
 
-        drawingStates[room][socket.id] = { drawing: false, path: [{ x: startX, y: startY }] };
+        drawingStates[room][socket.id] = { drawing: false };
         
         // Emit the 'drawingEnd' event with user identifier
         io.to(room).emit('drawingEnd', {  });
