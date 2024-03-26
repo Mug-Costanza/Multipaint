@@ -202,12 +202,12 @@
     
     <div id="modeButtons">
         <!-- Draw Button with Icon -->
-        <button style="position: fixed; bottom: 75px; left: 45%; z-index: 100; display: flex;" class="mode-button active" onclick="setMode('draw')">
+        <button style="position: fixed; bottom: 75px; left: 47%; z-index: 100; display: flex;" class="mode-button active" onclick="setMode('draw')">
             <i class="fas fa-pencil-alt"></i>
         </button>
 
         <!-- Scroll Button with Icon -->
-        <button style="position: fixed; bottom: 75px; left: calc(45% + 80px); z-index: 100; display: flex;" class="mode-button" onclick="setMode('scroll')">
+        <button style="position: fixed; bottom: 75px; left: calc(47% + 60px); z-index: 100; display: flex;" class="mode-button" onclick="setMode('scroll')">
             <i class="fas fa-hand-paper"></i>
         </button>
     </div>
@@ -356,6 +356,7 @@
             $('#landing').show();
             $('#content').hide();
             $("#canvas").hide();
+            $("#modeButtons").hide();
         }
         // Enable message input and button after updating settings
         const enableMessageInput = () => {
@@ -388,6 +389,7 @@
             // Hide settings
             $('#settings').hide();
             $('#canvas').show();
+            $('#modeButtons').show();
             $('#toggleChatButton').show();
             
             $('#messages').width("400px");
@@ -528,6 +530,7 @@
         let touchStartX, touchStartY;
 
         function handleTouchStart(e) {
+            if (mode !== 'draw') return;
             e.preventDefault(); // Prevent scrolling when touching the canvas
             const touch = e.touches[0]; // Get the first touch event
             const rect = canvas.getBoundingClientRect(); // Get the canvas position and size
@@ -540,6 +543,7 @@
         }
 
         function handleTouchMove(e) {
+            if (mode !== 'draw') return;
             if (!drawing) return; // If we are not drawing, exit the function
             e.preventDefault(); // Prevent scrolling when touching the canvas
             const touch = e.touches[0]; // Get the first touch event
@@ -564,6 +568,7 @@
         }
 
         function handleTouchEnd(e) {
+            if (mode !== 'draw') return;
             e.preventDefault(); // Prevent additional actions on touch end
             if (!drawing) return; // If we are not drawing, exit the function
             drawing = false; // Stop drawing
@@ -935,6 +940,12 @@
 
                 // Implement scrolling functionality
                 document.querySelector('.canvas-container').addEventListener('mousedown', function(e) {
+                    
+                    if (mode === 'draw') {
+                            e.preventDefault(); // Prevent the browser's default action to allow drawing
+                            draw(e.touches[0]); // Adapt draw function for touch events
+                        }
+                    
                     if (mode !== 'scroll') return;
                     const container = this;
                     let startX = e.pageX - container.offsetLeft;
@@ -957,7 +968,7 @@
 
                     document.addEventListener('mousemove', onMouseMove);
                     document.addEventListener('mouseup', onMouseUp);
-                });
+                },  { passive: false });
 
                 // Implement zoom functionality
                 document.getElementById('canvas').addEventListener('wheel', function(e) {
