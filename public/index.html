@@ -20,36 +20,37 @@
               background: var(--rainbow); /* changed 'content' to 'background' */
             }
         
-        body {
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
             background-color: #121212; /* Dark background color */
             color: #ffffff; /* Text color */
             font-family: Arial, sans-serif; /* Choose a suitable font-family */
-            margin: 0;
-            padding: 0;
-            height: 100vh; /* Set the body height to full viewport height */
             overflow: hidden; /* Hide vertical scrollbar */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            position: relative;
         }
-        
-        #canvas {
-            display: none; /* Change display to block to ensure it's visible */
-            margin: auto; /* Center the canvas horizontally */
-        }
-
-        #content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
-        }
+            
+            #landing {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+                display: none; /* Initially hide content */
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            #content {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        height: 100vh;
+                        overflow: hidden;
+                    }
 
         #settings {
             display: flex;
@@ -157,12 +158,64 @@
             position: absolute;
             /* Other styling as needed (e.g., background-color) */
         }
+            
+        .mode-button {
+            background-color: #333;
+            color: white;
+            padding: 8px 12px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .mode-button.active {
+            background-color: #555;
+        }
+                    
+                    /* Canvas container to control overflow and enable scrolling */
+        .canvas-container {
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        canvas {
+            cursor: crosshair; /* Default cursor to crosshair for drawing */
+            background-color: transparent;
+            display: none; /* Change display to block to ensure it's visible */
+            margin: auto; /* Center the canvas horizontally */
+            }
+
+        /* Adjust the cursor style based on the mode */
+        .scroll-mode canvas {
+            cursor: grab;
+        }
+                    
+        .zoom-mode canvas {
+            cursor: zoom-in;
+        }
     </style>
 </head>
 <body>
-    <canvas id="canvas" width="110%" height="110%"></canvas>
     
-    <div id="landing" style="text-align: center; margin-top: 50px;">
+    <div id="modeButtons">
+        <!-- Draw Button with Icon -->
+        <button style="position: fixed; bottom: 75px; left: 45%; z-index: 100; display: flex;" class="mode-button active" onclick="setMode('draw')">
+            <i class="fas fa-pencil-alt"></i>
+        </button>
+
+        <!-- Scroll Button with Icon -->
+        <button style="position: fixed; bottom: 75px; left: calc(45% + 80px); z-index: 100; display: flex;" class="mode-button" onclick="setMode('scroll')">
+            <i class="fas fa-hand-paper"></i>
+        </button>
+    </div>
+    <div class="canvas-container">
+        <canvas id="canvas" width="100%" height="100%"></canvas>
+    </div>
+    
+    <div id="landing" style="text-align: center; top: 25%;">
         <a href="https://www.buymeacoffee.com/multipaint"><button id="donateButton" style="position: fixed; top: 10px; right: 10px; background-color: #6772e5; color: #fff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Donate</button></a>
         <a href="/privacy"><button id="privacyButton" style="position: fixed; top: 50px; right: 10px; background-color: #6772e5; color: #fff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Privacy Policy</button></a>
         <h1 style="font-size: 2.5em; margin-bottom: 10px; display: flex; justify-content: center;">
@@ -216,6 +269,7 @@
     
     <button id="saveCanvasButton" onclick="saveCanvasImage()" style="position: fixed; top: 10px; right: 10px; background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Save Image</button>
     <button style="position: fixed; top: 50px; right: 10px; background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;" onclick="window.location.href='/'">Back to Menu</button>
+
     
     <form id="form" action="">
         <input id="m" autocomplete="off" maxlength="300" /><button>Send</button>
@@ -224,6 +278,7 @@
 
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
     <script>
         const socket = io();
@@ -407,9 +462,12 @@
             
             toggleChat();
         });
+        
+        let mode = 'draw'; // Default mode
 
         // Modify the startDrawing function
             function startDrawing(e) {
+                if (mode !== 'draw') return;
                 const rect = canvas.getBoundingClientRect();
                 drawing = true;
                 lastX = e.clientX - rect.left;
@@ -424,6 +482,7 @@
 
             // Modify the draw function
             function draw(e) {
+                if (mode !== 'draw') return;
                 if (!drawing) return;
                 const rect = canvas.getBoundingClientRect();
                 const x = e.clientX - rect.left;
@@ -451,6 +510,7 @@
 
             // Modify the stopDrawing function
             function stopDrawing() {
+                if (mode !== 'draw') return;
                 if (!drawing) return;
                 drawing = false;
 
@@ -806,23 +866,6 @@
             publicOrPrivateText.style.display = 'block'; // Show the text
         }
         
-        // Functions to undo and redo drawing actions
-        function undoLastAction() {
-            if (drawingHistory.length > 0) {
-                const lastAction = drawingHistory.pop();
-                redoStack.push(lastAction);
-                redrawCanvas();
-            }
-        }
-
-        function redoLastAction() {
-            if (redoStack.length > 0) {
-                const redoAction = redoStack.pop();
-                drawingHistory.push(redoAction);
-                redrawCanvas();
-            }
-        }
-
         // Redraw the canvas based on the current state of drawingHistory
         function redrawCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
@@ -860,6 +903,92 @@
             cursor.style.backgroundColor = data.color;
         });
          */
+        
+        function undo() {
+            socket.emit('undo', { room: room, userId: socket.id });
+        }
+
+        function redo() {
+            socket.emit('redo', { room: room, userId: socket.id });
+        }
+        
+        // Additional script for modes
+
+                function setMode(newMode) {
+                    mode = newMode;
+                    const canvasContainer = document.querySelector('.canvas-container');
+                    // Update the canvas container class based on the selected mode
+                    canvasContainer.className = `canvas-container ${newMode}-mode`;
+
+                    // Update buttons' appearance based on the selected mode
+                    const buttons = document.querySelectorAll('.mode-button');
+                    buttons.forEach(button => {
+                        if(button.textContent.toLowerCase() === newMode) {
+                            button.classList.add('active');
+                        } else {
+                            button.classList.remove('active');
+                        }
+                    });
+
+                    // Additional logic for switching modes...
+                }
+
+                // Implement scrolling functionality
+                document.querySelector('.canvas-container').addEventListener('mousedown', function(e) {
+                    if (mode !== 'scroll') return;
+                    const container = this;
+                    let startX = e.pageX - container.offsetLeft;
+                    let startY = e.pageY - container.offsetTop;
+                    let scrollLeft = container.scrollLeft;
+                    let scrollTop = container.scrollTop;
+
+                    function onMouseMove(e) {
+                        // Calculate the distance moved
+                        const dx = e.pageX - container.offsetLeft - startX;
+                        const dy = e.pageY - container.offsetTop - startY;
+                        container.scrollLeft = scrollLeft - dx;
+                        container.scrollTop = scrollTop - dy;
+                    }
+
+                    function onMouseUp() {
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                    }
+
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                });
+
+                // Implement zoom functionality
+                document.getElementById('canvas').addEventListener('wheel', function(e) {
+                    if (mode !== 'zoom') return;
+                    e.preventDefault(); // Prevent the default scroll behavior
+                    const scaleAmount = e.deltaY * -0.01;
+                    // Apply zooming logic here, e.g., adjusting canvas size or using transform: scale(...)
+                });
+        
+        function setMode(newMode) {
+            mode = newMode;
+            
+            // First, remove 'active' class from all mode buttons
+            document.querySelectorAll('.mode-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Then, add 'active' class to the button that was clicked based on the mode
+            // This assumes the mode names directly correlate with the class names of the icons
+            if(newMode === 'draw') {
+                document.querySelector('.mode-button[onclick="setMode(\'draw\')"]').classList.add('active');
+            } else if(newMode === 'scroll') {
+                document.querySelector('.mode-button[onclick="setMode(\'scroll\')"]').classList.add('active');
+            } // Add more conditions if you have more modes
+
+            // Additional logic to apply the mode (e.g., changing cursor style)
+            const canvasContainer = document.querySelector('.canvas-container');
+            if(canvasContainer) {
+                canvasContainer.className = `canvas-container ${newMode}-mode`; // Apply the mode as a class to the container
+            }
+        }
     </script>
 </body>
 </html>
