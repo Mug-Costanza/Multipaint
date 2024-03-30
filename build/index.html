@@ -977,43 +977,22 @@
             mode = newMode;
             
             // First, remove 'active' class from all mode buttons
-            const modeButtons = document.querySelectorAll('.mode-button');
-            if (modeButtons) {
-                modeButtons.forEach(button => {
-                    if (button.classList) {
-                        button.classList.remove('active');
-                    } else {
-                        console.error('classList is not supported.');
-                    }
-                });
-            } else {
-                console.error('No mode buttons found.');
-            }
+            document.querySelectorAll('.mode-button').forEach(button => {
+                button.classList.remove('active');
+            });
             
             // Then, add 'active' class to the button that was clicked based on the mode
             // This assumes the mode names directly correlate with the class names of the icons
             if(newMode === 'draw') {
-                const drawButton = document.querySelector('.mode-button[onclick="setMode(\'draw\')"]');
-                if (drawButton) {
-                    drawButton.classList.add('active');
-                } else {
-                    console.error('Draw button not found.');
-                }
+                document.querySelector('.mode-button[onclick="setMode(\'draw\')"]').classList.add('active');
             } else if(newMode === 'scroll') {
-                const scrollButton = document.querySelector('.mode-button[onclick="setMode(\'scroll\')"]');
-                if (scrollButton) {
-                    scrollButton.classList.add('active');
-                } else {
-                    console.error('Scroll button not found.');
-                }
+                document.querySelector('.mode-button[onclick="setMode(\'scroll\')"]').classList.add('active');
             } // Add more conditions if you have more modes
 
             // Additional logic to apply the mode (e.g., changing cursor style)
             const canvasContainer = document.querySelector('.canvas-container');
             if(canvasContainer) {
                 canvasContainer.className = `canvas-container ${newMode}-mode`; // Apply the mode as a class to the container
-            } else {
-                console.error('Canvas container not found.');
             }
         }
     </script>
