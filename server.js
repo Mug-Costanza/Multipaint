@@ -34,6 +34,8 @@ const roomCanvases = {}; // Store canvas state for each room
 const drawingStates = {};  // Declare drawingStates variable here
 const chatMessages = {};
 const activeUsers = {};
+let roomUserActions = {}; // { room: { userId: [actions] } }
+let userRedoStacks = {}; // { room: { userId: [redoActions] } }
 
 let isDrawing = false;
 
@@ -42,6 +44,8 @@ const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
 io.on('connection', (socket) => {
     
     activeUsers[socket.id] = Date.now();
+    
+    io.emit('activeRooms', { activeRooms });
     
     // Function to check and handle inactivity
     const checkInactivity = () => {
@@ -61,11 +65,28 @@ io.on('connection', (socket) => {
     };
     
     socket.on('join', (data) => {
-        const { room, username, color } = data;
+        const { room, userId, username, color } = data;
 
         socket.join(room);
 
         users[socket.id] = { username, color, room };
+        
+        // Initialize if not already done
+        if (!roomUserActions[room]) {
+            roomUserActions[room] = {};
+        }
+        
+        if (!roomUserActions[room][userId]) {
+            roomUserActions[room][userId] = [];
+        }
+                
+        if (!userRedoStacks[room]) {
+            userRedoStacks[room] = {};
+        }
+        
+        if (!userRedoStacks[room][userId]) {
+            userRedoStacks[room][userId] = [];
+        }
         
         activeUsers[socket.id] = Date.now();
 
@@ -165,14 +186,21 @@ io.on('connection', (socket) => {
     });
 
     socket.on('drawing', (data) => {
-        const { room, x, y, color } = data;
+        const { room, userId, x, y, color } = data;
 
         if (!roomCanvases[room]) {
             roomCanvases[room] = [];
         }
+        
+        // Save the drawing action for the user
+                if (!roomUserActions[room][userId]) {
+                    roomUserActions[room][userId] = [];
+                }
 
         // Append new drawing action to the room's canvas state
         roomCanvases[room].push({ userId: socket.id, type: 'drawing', data: { x, y, color }});
+        roomUserActions[room][userId].push(data);
+        userRedoStacks[room][userId] = [];
         
         io.emit('activeRooms', { activeRooms });
 
@@ -208,15 +236,35 @@ io.on('connection', (socket) => {
         io.to(room).emit('clearCanvas'); // Notify all clients in the room to clear their canvases
     });
     
-    // Example structure for managing undo/redo
     socket.on('undo', (data) => {
         const { room, userId } = data;
-        // Logic to undo the last action for the user in the specified room
-        // This could involve popping the last action from the user's stack and re-rendering the canvas for them.
+
+                if (roomUserActions[room] && roomUserActions[room][userId] && roomUserActions[room][userId].length > 0) {
+                    // Remove the last action for the user and add it to the redo stack
+                    const action = roomUserActions[room][userId].pop();
+                    
+                    if (!userRedoStacks[room][userId]) {
+                        userRedoStacks[room][userId] = [];
+                    }
+                    
+                    userRedoStacks[room][userId].push(action);
+
+                    // Emit an event to all clients to update their canvas accordingly
+                    io.in(room).emit('undo', { userId, action });
+                }
     });
 
     socket.on('redo', (data) => {
-        // Similar to undo but for redo actions
+        const { room, userId } = data;
+
+                if (userRedoStacks[room] && userRedoStacks[room][userId] && userRedoStacks[room][userId].length > 0) {
+                    // Remove the last action from the redo stack and add it back to the actions for the user
+                    const action = userRedoStacks[room][userId].pop();
+                    roomUserActions[room][userId].push(action);
+
+                    // Emit an event to all clients to update their canvas accordingly
+                    io.in(room).emit('redo', { userId, action });
+                }
     });
     
     socket.on('cursorMove', (data) => {
