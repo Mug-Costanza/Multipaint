@@ -1,5 +1,7 @@
 # Multipaint
 
+![multipaint](https://github.com/ZacharyBunch01/Multipaint/assets/126414937/c761330a-9bec-493c-9630-0f2ac523a436)
+
 Multipaint is a simple, web-based collaborative paint/chat app.
 
 Visit the site here: https://www.multipaint.net
