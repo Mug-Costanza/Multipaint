@@ -28,3 +28,7 @@ Visit the site here: https://www.multipaint.net
 * Node.js
 * Heroku
 * Git
+
+ ## License
+
+This project is licensed under the [MIT License](LICENSE).
