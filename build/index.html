@@ -271,7 +271,7 @@
     <button style="position: fixed; top: 50px; right: 10px; background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;" onclick="window.location.href='/'">Back to Menu</button>
     
     <button id="undoButton" style="position: fixed; bottom: 75px; left: 10px; background-color: #6772e5; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;" onclick="undo();">Undo</button>
-    <button id="redoButton" style="position: fixed; bottom: 75px; left: 85px; background-color: #6772e5; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;" onclick="undo();">Redo</button>
+    <button id="redoButton" style="position: fixed; bottom: 75px; left: 85px; background-color: #6772e5; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;" onclick="redo();">Redo</button>
     
     <form id="form" action="">
         <input id="m" autocomplete="off" maxlength="300" /><button id="m-button">Send</button>
@@ -400,8 +400,8 @@
             $('#toggleChatButton').show();
             $('#modeButtons').show();
             $('#toggleChatButton').show();
-            $('#undoButton').show();
-            $('#redoButton').show();
+            // $('#undoButton').show();
+            // $('#redoButton').show();
             $('#m').show();
             $('#m-button').show();
             $('#clearCanvasButton').show();
@@ -911,13 +911,17 @@
                 document.body.appendChild(cursor);
                 cursors[data.userId] = cursor;
             }
+            
+            // Get the canvas and its 2d context
+            canvas = document.getElementById('canvas');
+            ctx = canvas.getContext('2d');
             // Calculate the position relative to the canvas or a specific container
-            const rect = ctx.getBoundingClientRect(); // Adjust this if the cursor should align with another element
+            const rect = canvas.getBoundingClientRect(); // Adjust this if the cursor should align with another element
 
             cursor.style.left = `${data.position.x - rect.left - cursor.offsetWidth / 2 - 150}px`;
             cursor.style.top = `${data.position.y - rect.top - cursor.offsetHeight / 2}px`;
             
-            cursor.style.marginLeft = "-1050px;";
+            cursor.style.marginLeft = "0px;";
             // Set the cursor's color
             cursor.style.backgroundColor = data.color;
         });
@@ -925,6 +929,31 @@
         
         function undo() {
             socket.emit('undo', { room: room, userId: socket.id });
+        }
+        
+        socket.on('undo', function(data) {
+            // Assuming drawingHistory is an array of drawing actions
+            // Remove the last action
+            drawingHistory.pop();
+
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Redraw all remaining actions
+            drawingHistory.forEach(function(action) {
+                // Redraw action here
+                redrawAction(action);
+            });
+        });
+
+        function redrawAction(action) {
+            // Assuming a simple line drawing action for the example
+            ctx.beginPath();
+            ctx.moveTo(action.startX, action.startY);
+            ctx.lineTo(action.x, action.y);
+            ctx.strokeStyle = action.color;
+            ctx.lineWidth = 2; // Example line width
+            ctx.stroke();
         }
 
         function redo() {

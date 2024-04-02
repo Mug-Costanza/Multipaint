@@ -238,20 +238,15 @@ io.on('connection', (socket) => {
     
     socket.on('undo', (data) => {
         const { room, userId } = data;
-
-                if (roomUserActions[room] && roomUserActions[room][userId] && roomUserActions[room][userId].length > 0) {
-                    // Remove the last action for the user and add it to the redo stack
-                    const action = roomUserActions[room][userId].pop();
-                    
-                    if (!userRedoStacks[room][userId]) {
-                        userRedoStacks[room][userId] = [];
-                    }
-                    
-                    userRedoStacks[room][userId].push(action);
-
-                    // Emit an event to all clients to update their canvas accordingly
-                    io.in(room).emit('undo', { userId, action });
-                }
+        if (roomUserActions[room] && roomUserActions[room][userId] && roomUserActions[room][userId].length > 0) {
+            // Pop the last action for the user
+            const actionToUndo = roomUserActions[room][userId].pop();
+            // Add it to the redo stack
+            if (!userRedoStacks[room][userId]) userRedoStacks[room][userId] = [];
+            userRedoStacks[room][userId].push(actionToUndo);
+            // Emit an event to all clients to undo the action visually
+            io.in(room).emit('undoAction', { userId, actionToUndo });
+        }
     });
 
     socket.on('redo', (data) => {
