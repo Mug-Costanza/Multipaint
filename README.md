@@ -26,3 +26,5 @@ Visit the site here: https://www.multipaint.net
 ## Development Tools
 * React
 * Node.js
+* Heroku
+* Git
