@@ -21,8 +21,7 @@ Visit the site here: https://www.multipaint.net
 * Eraser
 
 ## Known Issues
-* Scroll function does not work properly on mobile.
-* Interaction select buttons do not highlight properly in production builds.
+* Upon loading the canvas history for a new user, simutaniously drawn lines confuse their start and end points between different users.
 * Privacy Policy needs revising.
 
 ## Development Tools
