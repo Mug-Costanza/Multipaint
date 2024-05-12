@@ -17,7 +17,6 @@ Visit the site here: https://www.multipaint.net
 
 ## Future Features That I Will Add One Day (In Priority Order)
 * Undo / Redo Button
-* Eraser
 
 ## Known Issues
 * Upon loading the canvas history for a new user, simutaniously drawn lines confuse their start and end points between different users.
