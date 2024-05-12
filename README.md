@@ -16,7 +16,6 @@ Visit the site here: https://www.multipaint.net
     4. An entertaining social / online experiment
 
 ## Future Features That I Will Add One Day (In Priority Order)
-* Public / Private Room Toggle 
 * Undo / Redo Button
 * Eraser
 
