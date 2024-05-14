@@ -84,6 +84,7 @@
             padding: 10px 15px;
             border-radius: 5px;
             cursor: pointer;
+            pointer-events: auto;
         }
 
         button:hover {
@@ -124,6 +125,7 @@
             color: #ffffff; /* Text color for the message input box */
             border: none;
             border-radius: 3px;
+            pointer-events: auto;
         }
 
         /* Set color for system messages */
@@ -135,7 +137,11 @@
         #messages li span.default-username {
             color: #ffffff;
         }
-        
+            
+        #messages {
+            pointer-events: none; /* Ignore pointer events */
+        }
+    
         /* Adjust the positioning of the clear canvas button */
         #clearCanvasContainer {
             left: 50%;
@@ -156,7 +162,6 @@
             height: 10px;
             border-radius: 50%;
             position: absolute;
-            /* Other styling as needed (e.g., background-color) */
         }
             
         .mode-button {
@@ -167,6 +172,7 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            pointer-events: auto;
         }
             
         .mode-button.active {
@@ -183,7 +189,7 @@
 
         canvas {
             cursor: crosshair; /* Default cursor to crosshair for drawing */
-            background-color: transparent;
+            background-color: #121212;
             display: none; /* Change display to block to ensure it's visible */
             margin: auto; /* Center the canvas horizontally */
         }
@@ -196,19 +202,65 @@
         .zoom-mode canvas {
             cursor: zoom-in;
         }
+            
+        .toggle-container {
+            position: fixed;
+            top: 35px; /* Adjust as needed */
+            left: 5px; /* Adjust as needed */
+            display: flex;
+            align-items: center; /* Ensure label, toggle, and icon are aligned */
+            pointer-events: auto;
+        }
+            
+        #infoIcon {
+            margin-left: 5px; /* Space between label and icon */
+            color: #555; /* Adjust color as needed */
+            cursor: pointer;
+            position: relative;
+            pointer-events: auto;
+        }
+
+        .tooltip-text {
+                visibility: hidden;
+                width: auto; /* Let the width adjust based on content */
+                background-color: black;
+                color: #fff;
+                text-align: left;
+                border-radius: 6px;
+                padding: 5px 10px;
+                position: absolute;
+                z-index: 1;
+                left: 110%; /* Position to the right of the icon */
+                top: 50%;
+                transform: translateY(-50%);
+                white-space: nowrap; /* Prevent text from wrapping */
+                font-size: 12px; /* Smaller text size */
+                opacity: 0;
+                transition: opacity 0.3s;
+                pointer-events: auto;
+                -webkit-user-select: none; /* Disable text selection for webkit browsers */
+                -moz-user-select: none; /* Disable text selection for Mozilla Firefox */
+                -ms-user-select: none; /* Disable text selection for Internet Explorer/Edge */
+                user-select: none; /* Disable text selection for other browsers */
+                }
+
+        #infoIcon:hover + .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
     
     <div id="modeButtons">
-        <!-- Draw Button with Icon -->
         <button style="position: fixed; bottom: 75px; left: 47%; z-index: 100; display: flex;" class="mode-button active" onclick="setMode('draw')">
             <i class="fas fa-pencil-alt"></i>
         </button>
-
-        <!-- Scroll Button with Icon -->
         <button style="position: fixed; bottom: 75px; left: calc(47% + 60px); z-index: 100; display: flex;" class="mode-button" onclick="setMode('scroll')">
             <i class="fas fa-hand-paper"></i>
+        </button>
+        <button style="position: fixed; bottom: 75px; left: calc(47% + 120px); z-index: 100; display: hidden;" class="mode-button" onclick="setMode('erase')">
+            <i class="fas fa-eraser"></i>
         </button>
     </div>
     <div class="canvas-container">
@@ -252,10 +304,6 @@
         <input id="color" type="color" value="#ffffff" />
         <button id="updateSettings" onclick="updateSettings()">Join Room</button>
     </div>
-    
-    <label htmlFor="publicToggle" id="publicToggleLabel" style="position: fixed; top: 40px; left: 10px; display: none;">Public Room:</label>
-    <input type="checkbox" id="publicToggle" style="position: fixed; top: 40px; left: 110px; display: none;"/>
-    <div id="publicOrPrivateText" style="position: fixed; top: 40px; left: 10px; display: show;"></div>
 
     <div id="activeUsersCount" style="position: fixed; top: 10px; left: 10px; color: #ffffff;"></div>
     <button id="toggleChatButton" onclick="toggleChat()" style="position: fixed; top: 40px; left: 10px; margin-top: 35vh;">Toggle Chat</button>
@@ -270,8 +318,12 @@
     <button id="saveCanvasButton" onclick="saveCanvasImage()" style="position: fixed; top: 10px; right: 10px; background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Save Image</button>
     <button style="position: fixed; top: 50px; right: 10px; background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;" onclick="window.location.href='/'">Back to Menu</button>
     
-    <button id="undoButton" style="position: fixed; bottom: 75px; left: 10px; background-color: #6772e5; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;" onclick="undo();">Undo</button>
-    <button id="redoButton" style="position: fixed; bottom: 75px; left: 85px; background-color: #6772e5; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;" onclick="undo();">Redo</button>
+    <div class="toggle-container">
+        <input type="checkbox" id="publicToggle"/>
+        <label for="publicToggle" style="margin-left: 5px; margin-top: -5px;" id="publicToggleLabel">Private Room</label>
+        <i class="fas fa-info-circle" style="margin-left: 5px; margin-top: -5px;" id="infoIcon"></i>
+        <span class="tooltip-text">If the room is declared private,<br>nobody can join randomly.</span>
+    </div>
     
     <form id="form" action="">
         <input id="m" autocomplete="off" maxlength="300" /><button id="m-button">Send</button>
@@ -336,7 +388,12 @@
             $('#m').hide();
             $('#m-button').hide();
             $('#clearCanvasButton').hide();
+            $('#publicToggle').hide();
+            $('#publicToggleLabel').hide();
+            $('#infoIcon').hide();
             document.title = roomCodeInUrl;
+            
+            $('body').css('background-color', '#121212');
 
             // Load username and color from cookies
             const savedUsername = getCookie('username');
@@ -365,6 +422,11 @@
             $('#content').hide();
             $("#canvas").hide();
             $("#modeButtons").hide();
+            
+            $('body').css('background-color', '#121212');
+            $("#publicToggle").hide();
+            $("#publicToggleLabel").hide();
+            $("#infoIcon").hide();
         }
         // Enable message input and button after updating settings
         const enableMessageInput = () => {
@@ -397,17 +459,21 @@
             // Hide settings
             $('#settings').hide();
             $('#canvas').show();
-            $('#toggleChatButton').show();
             $('#modeButtons').show();
             $('#toggleChatButton').show();
-            $('#undoButton').hide();
-            $('#redoButton').hide();
+            $('#undoButton').show();
+            $('#redoButton').show();
             $('#m').show();
             $('#m-button').show();
             $('#clearCanvasButton').show();
+            $('#publicToggle').show();
+            $('#publicToggleLabel').show();
+            $('#infoIcon').show();
             
             $('#messages').width("400px");
             $('#messages').css('padding', '10px');
+            
+            $('body').css('background-color', '#0d0d0d');
             
             // Enable message input and button
             enableMessageInput();
@@ -446,28 +512,68 @@
             // Get the canvas and its 2d context
             canvas = document.getElementById('canvas');
             ctx = canvas.getContext('2d');
-
-            // Set canvas dimensions relative to the viewport
-            canvas.width = window.innerWidth * 1.1; // 90% of the viewport width
-            canvas.height = window.innerHeight * 1.1; // 90% of the viewport height
             
-            $('#publicToggleLabel').hide();
-            $('#publicToggle').hide();
+            canvas.width = 2500;
+            canvas.height = 1600;
 
             // Initialize drawing variables
             drawing = false;
             lastX = 0;
             lastY = 0;
+            
+            // Set up pointer event properties for the chatbox
+            const chatbox = document.getElementById('messages');
+            chatbox.style.pointerEvents = 'none'; // Ensure the chatbox can be interacted with
+
+            // Disable drawing when the mouse is over the chatbox
+            chatbox.addEventListener('mouseenter', function() {
+                chatbox.style.pointerEvents = 'none';  // Disable drawing when hovering over the chatbox
+            });
+
+            // Enable drawing when the mouse leaves the chatbox
+            chatbox.addEventListener('mouseleave', function() {
+                chatbox.style.pointerEvents = 'none';  // Re-enable drawing when not hovering over the chatbox
+            });
+
+            // Detect mouse wheel event on the chatbox to handle scroll without affecting drawing
+            chatbox.addEventListener('scroll', function(event) {
+                chatbox.style.pointerEvents = 'auto';
+            });
+            
+            // Detect mouse wheel event on the chatbox to handle scroll without affecting drawing
+            canvas.addEventListener('mousedown', function(event) {
+                chatbox.style.pointerEvents = 'none';
+            });
 
             // Add mouse event listeners to the canvas
-            canvas.addEventListener('mousedown', startDrawing);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', stopDrawing);
+            document.addEventListener('mousedown', function(event) {
+                if (isInsideCanvas(event.clientX, event.clientY)) {
+                    startDrawing(event);
+                }
+            });
+
+            // Add mouse event listeners to the canvas
+            document.addEventListener('mousedown', function(event) {
+                if (isInsideCanvas(event.clientX, event.clientY)) {
+                    startDrawing(event);
+                }
+            });
+
+            document.addEventListener('mousemove', function(event) {
+                if (isInsideCanvas(event.clientX, event.clientY) && drawing) {
+                    draw(event);
+                }
+            });
+
+            document.addEventListener('mouseup', function(event) {
+                stopDrawing(event);
+            });
             canvas.addEventListener('mouseout', stopDrawing);
             
-            canvas.addEventListener('touchstart', handleTouchStart);
-            canvas.addEventListener('touchmove', handleTouchMove);
-            canvas.addEventListener('touchend', handleTouchEnd);
+            canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+            canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+            canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+            canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
             
             canvas.addEventListener('mousemove', (event) => {
                 const rect = canvas.getBoundingClientRect();
@@ -479,54 +585,67 @@
             toggleChat();
         });
         
+        // Function to check if the given x, y coordinates are inside the canvas
+        function isInsideCanvas(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            return (
+                clientX >= rect.left &&
+                clientX <= rect.right &&
+                clientY >= rect.top &&
+                clientY <= rect.bottom
+            );
+        }
+        
+        function setDrawingActive(isActive) {
+            if (isActive) {
+                canvas.style.pointerEvents = 'auto';  // Enable drawing interactions
+            } else {
+                canvas.style.pointerEvents = 'none';  // Allow clicks to pass through to elements below
+            }
+        }
+        
         let mode = 'draw'; // Default mode
 
         // Modify the startDrawing function
-            function startDrawing(e) {
-                if (mode !== 'draw') return;
-                const rect = canvas.getBoundingClientRect();
-                drawing = true;
-                lastX = e.clientX - rect.left;
-                lastY = e.clientY - rect.top;
+        function startDrawing(e) {
+            if (mode !== 'draw' && mode !== 'erase') return;
+            const rect = canvas.getBoundingClientRect();
+            drawing = true;
+            lastX = e.clientX - rect.left;
+            lastY = e.clientY - rect.top;
 
-                // Store the starting point of the drawing for the current user
-                drawingHistory[username] = [{ x: lastX, y: lastY }];
+            // Update the last position at the start of a new line specifically for the current user
+            lastPositions[socket.id] = { x: lastX, y: lastY };
 
-                // Emit the 'drawingStart' event with room and start coordinates
-                socket.emit('drawingStart', { room, startX: lastX, startY: lastY, userId: socket.id });
-            }
+            // Emit the 'drawingStart' event with room and start coordinates
+            socket.emit('drawingStart', { room, startX: lastX, startY: lastY, userId: socket.id, mode });
+        }
 
-            // Modify the draw function
-            function draw(e) {
-                if (mode !== 'draw') return;
-                if (!drawing) return;
-                const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
+        function draw(e) {
+            if (!drawing) return;
 
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 2;
-                ctx.beginPath();
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
 
-                // Get the drawing path specific to the current user
-                const path = drawingHistory[username];
+            ctx.globalCompositeOperation = mode === 'erase' ? 'destination-out' : 'source-over';
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = color; // Ensure the current color is used
+            ctx.lineWidth = 2;
+            ctx.stroke();
 
-                // Draw from the last point in the path to the current point
-                ctx.moveTo(path[path.length - 1].x, path[path.length - 1].y);
-                ctx.lineTo(x, y);
-                ctx.stroke();
+            lastX = x;
+            lastY = y;
 
-                // Update the last point in the path
-                path.push({ x, y });
-
-                if (drawing) {
-                    socket.emit('drawing', { room, x, y, color, userId: socket.id });
-                }
-            }
-
+            // Emit the current drawing action with the correct color
+            socket.emit('drawing', { room, x, y, color, mode });
+        }
+        
             // Modify the stopDrawing function
             function stopDrawing() {
-                if (mode !== 'draw') return;
+                if (mode !== 'draw' && mode !== 'erase') return;
                 if (!drawing) return;
                 drawing = false;
 
@@ -544,51 +663,98 @@
         let touchStartX, touchStartY;
 
         function handleTouchStart(e) {
-            if (mode !== 'draw') return;
-            e.preventDefault(); // Prevent scrolling when touching the canvas
-            const touch = e.touches[0]; // Get the first touch event
-            const rect = canvas.getBoundingClientRect(); // Get the canvas position and size
-            drawing = true; // Set drawing to true
-            lastX = touch.clientX - rect.left; // Calculate the X position relative to the canvas
-            lastY = touch.clientY - rect.top; // Calculate the Y position relative to the canvas
+            if (mode !== 'draw' && mode !== 'erase') return;
+            e.preventDefault(); // Prevent scrolling and other touch behaviors
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            drawing = true;
+            lastX = touch.clientX - rect.left;
+            lastY = touch.clientY - rect.top;
 
-            // Similar to the mouse start, we can emit the drawingStart event
-            sendMessage('drawingStart', { startX: lastX, startY: lastY });
+            // Emit the 'drawingStart' with appropriate mode
+            socket.emit('drawingStart', { room, startX: lastX, startY: lastY, userId: socket.id, mode });
+
+            // Initialize last positions for correct drawing continuation
+            lastPositions[socket.id] = { x: lastX, y: lastY };
         }
 
         function handleTouchMove(e) {
-            if (mode !== 'draw') return;
-            if (!drawing) return; // If we are not drawing, exit the function
-            e.preventDefault(); // Prevent scrolling when touching the canvas
-            const touch = e.touches[0]; // Get the first touch event
-            const rect = canvas.getBoundingClientRect(); // Get the canvas position and size
-            const x = touch.clientX - rect.left; // Calculate the X position relative to the canvas
-            const y = touch.clientY - rect.top; // Calculate the Y position relative to the canvas
+            if (!drawing) return;
+            if (mode !== 'draw' && mode !== 'erase') return;
+            e.preventDefault(); // Prevent scrolling and other touch behaviors
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
 
-            // Drawing logic
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY); // Move to the last position
-            ctx.lineTo(x, y); // Draw a line to the new position
-            ctx.stroke();
+            // Drawing or erasing based on the mode
+            if (mode === 'erase') {
+                ctx.globalCompositeOperation = 'destination-out'; // Set to erase
+                ctx.beginPath();
+                ctx.arc(x, y, 15, 0, 2 * Math.PI); // Erase with a circle
+                ctx.fill();
+            } else {
+                ctx.globalCompositeOperation = 'source-over'; // Set to draw
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(x, y);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
 
-            // Update the last position for the next movement
+            // Update positions
             lastX = x;
             lastY = y;
 
-            // Emit the drawing data to other users
-            sendMessage('drawing', { x, y, color });
+            // Emit the drawing data
+            socket.emit('drawing', { room, x, y, color, mode });
         }
 
         function handleTouchEnd(e) {
-            if (mode !== 'draw') return;
-            e.preventDefault(); // Prevent additional actions on touch end
-            if (!drawing) return; // If we are not drawing, exit the function
-            drawing = false; // Stop drawing
+            if (!drawing) return;
+            if (mode !== 'draw' && mode !== 'erase') return;
+            e.preventDefault(); // Prevent additional touch end behaviors
+            drawing = false;
 
             // Emit the drawingEnd event
-            sendMessage('drawingEnd', {});
+            socket.emit('drawingEnd', { room, userId: socket.id });
+            lastPositions[socket.id] = null; // Clear last positions
+        }
+        
+        function handleGlobalTouchStart(e) {
+            if (isInsideCanvas(e.touches[0].clientX, e.touches[0].clientY)) {
+                handleTouchStart(e);
+                e.preventDefault(); // Only call this if the touch starts inside the canvas
+                e.stopPropagation(); // Prevent the event from bubbling up
+            }
+        }
+
+        function handleGlobalTouchMove(e) {
+            if (drawing && isInsideCanvas(e.touches[0].clientX, e.touches[0].clientY)) {
+                handleTouchMove(e);
+                e.preventDefault(); // Prevent default only if drawing is active
+            }
+        }
+
+        function handleGlobalTouchEnd(e) {
+            if (drawing) {
+                handleTouchEnd(e);
+                e.preventDefault(); // Prevent default only if a drawing operation was ongoing
+            }
+        }
+
+        function continueDrawingAtCanvasEdgeTouch(touch) {
+            // Calculate touch position at the edge if needed and continue drawing
+            const rect = canvas.getBoundingClientRect();
+            let x = touch.clientX - rect.left;
+            let y = touch.clientY - rect.top;
+
+            // Clamp x and y to canvas boundaries
+            x = Math.min(Math.max(x, 0), rect.width);
+            y = Math.min(Math.max(y, 0), rect.height);
+
+            // Continue drawing logic here if applicable
         }
         
         // Function to clear drawing history when the canvas is cleared
@@ -637,7 +803,7 @@
                 // Ensure there's at least one path initialized before trying to add points or mark the end
                 if (userHistory.length === 0) {
                     // Optionally handle the error, e.g., by initializing a path or logging a warning
-                    console.warn("Attempting to draw or end a line before starting it. Initializing a new path.");
+                    // console.warn("Attempting to draw or end a line before starting it. Initializing a new path.");
                     userHistory.push([{ x: data.x, y: data.y }]); // Initialize a path if desired
                 } else {
                     // Normal operation for adding points to the existing path or marking its end
@@ -663,11 +829,29 @@
         // Ensure that the 'drawing', 'drawingStart', and 'drawingEnd' event handlers
         // send the isStart and isEnd flags appropriately
         socket.on('drawing', function(data) {
-            drawFromServer({ ...data, isStart: false, isEnd: false });
+            const { userId, x, y, color, mode } = data;
+
+            if (!lastPositions[userId]) return;  // Ignore if no starting point is set (should not happen normally)
+
+            ctx.globalCompositeOperation = mode === 'erase' ? 'destination-out' : 'source-over';
+            ctx.beginPath();
+            ctx.moveTo(lastPositions[userId].x, lastPositions[userId].y);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = mode === 'erase' ? 15 : 2;
+            ctx.stroke();
+
+            // Update last known positions for the user
+            lastPositions[userId] = { x, y };
         });
+        
         socket.on('drawingStart', function(data) {
-            drawFromServer({ ...data, isStart: true });
+            const { userId, startX, startY } = data;
+
+            // Initialize last positions for other users when they start drawing
+            lastPositions[userId] = { x: startX, y: startY };
         });
+
         socket.on('drawingEnd', function(data) {
             drawFromServer({ ...data, isEnd: true });
         });
@@ -730,7 +914,7 @@
                     const cursor = document.getElementById(`cursor-${data.userId}`);
                     
                     if (cursor) {
-                        cursor.parentNode.removeChild(cursor);
+                        cursor.parentNode.removeChild(cursor); // Remove the cursor element from the DOM
                     }
                     
                     // Update the first user's information
@@ -773,25 +957,23 @@
         }
 
         function joinRandomRoom() {
-            // Get the list of active rooms
-            const activeRoomList = activeRooms;
+            // Filter out private rooms and rooms with no active users
+            const publicRooms = Object.keys(activeRooms).filter(roomName => !activeRooms[roomName].isPrivate && activeRooms[roomName].count > 0);
 
-            // Check if there are active rooms
-            if (activeRoomList.length > 0) {
-                // Randomly select a room from the list
-                const randomRoom = activeRoomList[Math.floor(Math.random() * activeRoomList.length)];
-
-                // Debugging: Log the randomly selected room to the console
-                console.log('Random Room:', randomRoom);
+            if (publicRooms.length > 0) {
+                const randomRoomIndex = Math.floor(Math.random() * publicRooms.length);
+                const randomRoomName = publicRooms[randomRoomIndex];
+                
+                // Log for debugging
+                console.log('Random Room:', randomRoomName);
 
                 // Redirect to the selected room-specific URL
-                window.location.href = `/${randomRoom}`;
+                window.location.href = `/${randomRoomName}`;
                 
-                // Emit the updated user count to all clients in the room
-                io.to(data.room).emit('activeUsersCount', { room: data.room, count: activeRooms[data.room] });
+                // Optionally emit an event if needed
+                socket.emit('joinRandomRoom', { room: randomRoomName });
             } else {
-                // Debugging: Alert the current state of activeRooms
-                alert("No active rooms available. Create or join a room manually.");
+                alert("No available public rooms. Try creating a new one or wait for public rooms to become available.");
             }
         }
         
@@ -831,6 +1013,10 @@
                // Update the active user count in the UI
                updateActiveUsersCount(data.count);
            });
+        
+        socket.on('noAvailableRooms', function(data) {
+            alert(data.message);  // Alert the user that no rooms are available for joining
+        });
 
         // Function to update the active user count in the UI
         function updateActiveUsersCount(count) {
@@ -872,19 +1058,6 @@
             $('#m').hide();
         }
         
-        // Update the function to show public/private text instead of the toggle button
-        function updatePublicOrPrivateText(isPublic) {
-            const publicOrPrivateText = document.getElementById('publicOrPrivateText');
-            
-            if (isPublic) {
-                publicOrPrivateText.textContent = 'Public Room'; // Display text for public room
-            } else {
-                publicOrPrivateText.textContent = 'Private Room'; // Display text for private room
-            }
-            
-            publicOrPrivateText.style.display = 'block'; // Show the text
-        }
-        
         // Redraw the canvas based on the current state of drawingHistory
         function redrawCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
@@ -911,13 +1084,11 @@
                 document.body.appendChild(cursor);
                 cursors[data.userId] = cursor;
             }
-            // Calculate the position relative to the canvas or a specific container
-            const rect = ctx.getBoundingClientRect(); // Adjust this if the cursor should align with another element
 
-            cursor.style.left = `${data.position.x - rect.left - cursor.offsetWidth / 2 - 150}px`;
-            cursor.style.top = `${data.position.y - rect.top - cursor.offsetHeight / 2}px`;
+            // Set the cursor's position relative to the canvas
+            cursor.style.left = `${data.position.x - cursor.offsetWidth / 2}px`;
+            cursor.style.top = `${data.position.y - cursor.offsetHeight / 2}px`;
             
-            cursor.style.marginLeft = "-1050px;";
             // Set the cursor's color
             cursor.style.backgroundColor = data.color;
         });
@@ -931,15 +1102,83 @@
             socket.emit('redo', { room: room, userId: socket.id });
         }
         
-        // Additional script for modes
+        socket.on('undoAction', function(data) {
+            if (data.userId === socket.id) {
+                // Remove the action from the canvas
+                removeActionFromCanvas(data.actionToUndo);
+            }
+        });
+
+        socket.on('redoAction', function(data) {
+            if (data.userId === socket.id) {
+                // Reapply the action to the canvas
+                applyActionToCanvas(data.action);
+            }
+        });
+        
+        socket.on('undo', function(data) {
+            // Assuming drawingHistory is an array of drawing actions
+            // Remove the last action
+            drawingHistory.pop();
+
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Redraw all remaining actions
+            drawingHistory.forEach(function(action) {
+                // Redraw action here
+                redrawAction(action);
+            });
+        });
+
+        function redrawAction(action) {
+            // Assuming a simple line drawing action for the example
+            ctx.beginPath();
+            ctx.moveTo(action.startX, action.startY);
+            ctx.lineTo(action.x, action.y);
+            ctx.strokeStyle = action.color;
+            ctx.lineWidth = 2; // Example line width
+            ctx.stroke();
+        }
+        
+        function removeActionFromCanvas(action) {
+            // Since there's no way to remove a drawn line directly from a canvas,
+            // we need to redraw the canvas without the last action.
+            if (drawingHistory.length > 0) {
+                drawingHistory.pop();  // Remove the last action
+                redrawCanvas();        // Redraw the canvas without the last action
+            }
+        }
+
+        function redrawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);  // Clear the canvas
+            drawingHistory.forEach(function(action) {
+                ctx.beginPath();
+                ctx.moveTo(action.startX, action.startY);
+                ctx.lineTo(action.endX, action.endY);
+                ctx.strokeStyle = action.color;
+                ctx.lineWidth = action.width;
+                ctx.stroke();
+            });
+        }
+        
+        function applyActionToCanvas(action) {
+            drawingHistory.push(action);  // Re-add the action to the history
+            ctx.beginPath();
+            ctx.moveTo(action.startX, action.startY);
+            ctx.lineTo(action.endX, action.endY);
+            ctx.strokeStyle = action.color;
+            ctx.lineWidth = action.width;
+            ctx.stroke();
+        }
 
                 // Implement scrolling functionality
                 document.querySelector('.canvas-container').addEventListener('mousedown', function(e) {
                     
-                    if (mode === 'draw') {
+                    if (mode === 'draw' || mode === 'erase') {
                             e.preventDefault(); // Prevent the browser's default action to allow drawing
                             draw(e.touches[0]); // Adapt draw function for touch events
-                        }
+                    }
                     
                     if (mode !== 'scroll') return;
                     const container = this;
@@ -973,49 +1212,80 @@
                     // Apply zooming logic here, e.g., adjusting canvas size or using transform: scale(...)
                 });
         
-        function setMode(newMode) {
-            mode = newMode;
+        document.querySelector('.canvas-container').addEventListener('touchstart', function(e) {
+            if (mode !== 'scroll') return;  // Only allow scrolling in scroll mode
+            e.preventDefault();  // Prevent default touch behavior (scrolling, zooming)
             
-            // First, remove 'active' class from all mode buttons
-            const modeButtons = document.querySelectorAll('.mode-button');
-            if (modeButtons) {
-                modeButtons.forEach(button => {
-                    if (button.classList) {
-                        button.classList.remove('active');
-                    } else {
-                        console.error('classList is not supported.');
-                    }
-                });
-            } else {
-                console.error('No mode buttons found.');
-            }
-            
-            // Then, add 'active' class to the button that was clicked based on the mode
-            // This assumes the mode names directly correlate with the class names of the icons
-            if(newMode === 'draw') {
-                const drawButton = document.querySelector('.mode-button[onclick="setMode(\'draw\')"]');
-                if (drawButton) {
-                    drawButton.classList.add('active');
-                } else {
-                    console.error('Draw button not found.');
-                }
-            } else if(newMode === 'scroll') {
-                const scrollButton = document.querySelector('.mode-button[onclick="setMode(\'scroll\')"]');
-                if (scrollButton) {
-                    scrollButton.classList.add('active');
-                } else {
-                    console.error('Scroll button not found.');
-                }
-            } // Add more conditions if you have more modes
+            const container = this;
+            const touchStartX = e.touches[0].pageX - container.offsetLeft;
+            const touchStartY = e.touches[0].pageY - container.offsetTop;
+            let scrollLeft = container.scrollLeft;
+            let scrollTop = container.scrollTop;
 
-            // Additional logic to apply the mode (e.g., changing cursor style)
-            const canvasContainer = document.querySelector('.canvas-container');
-            if(canvasContainer) {
-                canvasContainer.className = `canvas-container ${newMode}-mode`; // Apply the mode as a class to the container
-            } else {
-                console.error('Canvas container not found.');
+            function onTouchMove(e) {
+                e.preventDefault();  // Prevent default touch behavior (scrolling, zooming)
+                // Calculate the distance moved
+                const touchX = e.touches[0].pageX - container.offsetLeft;
+                const touchY = e.touches[0].pageY - container.offsetTop;
+                const dx = touchX - touchStartX;
+                const dy = touchY - touchStartY;
+                container.scrollLeft = scrollLeft - dx;
+                container.scrollTop = scrollTop - dy;
             }
+
+            function onTouchEnd() {
+                document.removeEventListener('touchmove', onTouchMove);
+                document.removeEventListener('touchend', onTouchEnd);
+            }
+
+            document.addEventListener('touchmove', onTouchMove, { passive: false });
+            document.addEventListener('touchend', onTouchEnd, { passive: false });
+        }, { passive: false });
+
+        
+        function setMode(newMode) {
+            console.log("Setting mode to:", newMode);  // Debugging output
+            mode = newMode;
+
+            // Adjust canvas settings based on the mode
+            if (mode === 'draw') {
+                ctx.globalCompositeOperation = 'source-over';  // Default mode for drawing
+                ctx.lineWidth = 2;  // Set line width for drawing
+                canvas.style.cursor = 'crosshair';  // Set cursor for drawing
+            } else if (mode === 'erase') {
+                ctx.globalCompositeOperation = 'destination-out';  // Set to erase
+                ctx.lineWidth = 10;  // Set line width for eraser, usually larger
+                canvas.style.cursor = 'crosshair';  // Set cursor for erasing
+            } else if (mode === 'scroll') {
+                canvas.style.cursor = 'grab';
+            }
+
+            // Update UI button states
+            document.querySelectorAll('.mode-button').forEach(button => {
+                button.classList.remove('active');
+                if (button.getAttribute('onclick').includes(newMode)) {
+                    button.classList.add('active');
+                }
+            });
         }
+        
+        /*
+        document.getElementById('publicToggle').addEventListener('change', function() {
+            const isPrivate = this.checked;
+            const room = window.location.pathname.slice(1); // Assuming the room code is in the URL
+            socket.emit('privacyToggle', { room, isPrivate });
+        });
+         */
+        
+        $('#publicToggle').on('change', function() {
+            const isPrivate = $(this).is(':checked');
+            socket.emit('privacyToggle', { room, isPrivate });
+        });
+
+        socket.on('updatePrivacy', function(data) {
+            const { isPrivate } = data;
+            $('#publicToggle').prop('checked', isPrivate);
+        });
     </script>
 </body>
 </html>
