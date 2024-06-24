@@ -18,9 +18,6 @@ Visit the site here: https://www.multipaint.net
 ## Future Features That I Will Add One Day
 * Undo / Redo Button
 
-## Known Issues
-* Privacy Policy needs revising.
-
 ## Development Tools
 * React
 * Node.js
