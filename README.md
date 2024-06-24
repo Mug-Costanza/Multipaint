@@ -19,7 +19,6 @@ Visit the site here: https://www.multipaint.net
 * Undo / Redo Button
 
 ## Known Issues
-* Upon loading the canvas history for a new user, simutaniously drawn lines confuse their start and end points between different users.
 * Privacy Policy needs revising.
 
 ## Development Tools
