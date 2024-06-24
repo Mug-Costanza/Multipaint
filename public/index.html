@@ -826,34 +826,52 @@
             }
         }
 
-        // Ensure that the 'drawing', 'drawingStart', and 'drawingEnd' event handlers
-        // send the isStart and isEnd flags appropriately
-        socket.on('drawing', function(data) {
-            const { userId, x, y, color, mode } = data;
+        socket.on('drawingStart', (data) => {
+            const { userId, startX, startY, mode, color } = data;
 
-            if (!lastPositions[userId]) return;  // Ignore if no starting point is set (should not happen normally)
+            if (!userDrawingHistories[userId]) {
+                userDrawingHistories[userId] = [];
+            }
 
-            ctx.globalCompositeOperation = mode === 'erase' ? 'destination-out' : 'source-over';
-            ctx.beginPath();
-            ctx.moveTo(lastPositions[userId].x, lastPositions[userId].y);
-            ctx.lineTo(x, y);
-            ctx.strokeStyle = color;
-            ctx.lineWidth = mode === 'erase' ? 15 : 2;
-            ctx.stroke();
-
-            // Update last known positions for the user
-            lastPositions[userId] = { x, y };
-        });
-        
-        socket.on('drawingStart', function(data) {
-            const { userId, startX, startY } = data;
+            userDrawingHistories[userId].push([{ x: startX, y: startY, mode, color }]);
 
             // Initialize last positions for other users when they start drawing
             lastPositions[userId] = { x: startX, y: startY };
         });
 
-        socket.on('drawingEnd', function(data) {
-            drawFromServer({ ...data, isEnd: true });
+        socket.on('drawing', (data) => {
+            const { userId, x, y, color, mode } = data;
+
+            if (!userDrawingHistories[userId]) {
+                userDrawingHistories[userId] = [];
+            }
+
+            userDrawingHistories[userId][userDrawingHistories[userId].length - 1].push({ x, y, mode, color });
+
+            // Draw the line segment with correct globalCompositeOperation based on mode
+            ctx.globalCompositeOperation = mode === 'erase' ? 'destination-out' : 'source-over';
+            const lastPoint = userDrawingHistories[userId][userDrawingHistories[userId].length - 1].slice(-2);
+            ctx.beginPath();
+            ctx.moveTo(lastPoint[0].x, lastPoint[0].y);
+            ctx.lineTo(lastPoint[1].x, lastPoint[1].y);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = mode === 'erase' ? 10 : 2; // Adjust line width for erasing and drawing
+            ctx.stroke();
+
+            // Update last known positions for the user
+            lastPositions[userId] = { x, y };
+        });
+
+        socket.on('drawingEnd', (data) => {
+            const { userId } = data;
+
+            if (!userDrawingHistories[userId]) {
+                userDrawingHistories[userId] = [];
+            }
+
+            userDrawingHistories[userId].push([]);
+
+            delete lastPositions[userId];
         });
 
         socket.on('clearCanvas', function () {
@@ -1289,3 +1307,5 @@
     </script>
 </body>
 </html>
+
+
