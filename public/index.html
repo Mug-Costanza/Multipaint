@@ -9,17 +9,18 @@
     <meta property="og:description" content="A collaborative drawing tool.">
     <meta property="og:image" content="%PUBLIC_URL%/favicon.ico">
     <meta name="theme-color" content="rainbow">
-        <style>
-            /* Define rainbow gradient */
-            :root {
-              --rainbow: linear-gradient(to right, violet, indigo, blue, green, yellow, orange, red);
-            }
-
-            /* Apply rainbow gradient to theme-color meta tag */
-            meta[name="theme-color"] {
-              background: var(--rainbow); /* changed 'content' to 'background' */
-            }
-        
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://code.jquery.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src https://code.jquery.com https://cdnjs.cloudflare.com; connect-src 'self' https://*.socket.io;">
+    <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains">
+    <style>
+        /* Define rainbow gradient */
+        :root {
+            --rainbow: linear-gradient(to right, violet, indigo, blue, green, yellow, orange, red);
+        }
+        /* Apply rainbow gradient to theme-color meta tag */
+        meta[name="theme-color"] {
+            background: var(--rainbow); /* changed 'content' to 'background' */
+        }
+    
         body, html {
             margin: 0;
             padding: 0;
@@ -30,7 +31,7 @@
             font-family: Arial, sans-serif; /* Choose a suitable font-family */
             overflow: hidden; /* Hide vertical scrollbar */
         }
-            
+        
         #landing {
             position: absolute;
             width: 100%;
@@ -42,7 +43,7 @@
             align-items: center;
             justify-content: center;
         }
-            
+        
         #content {
             display: flex;
             flex-direction: column;
@@ -137,11 +138,11 @@
         #messages li span.default-username {
             color: #ffffff;
         }
-            
+        
         #messages {
             pointer-events: none; /* Ignore pointer events */
         }
-    
+
         /* Adjust the positioning of the clear canvas button */
         #clearCanvasContainer {
             left: 50%;
@@ -156,14 +157,14 @@
             font-weight: bold; /* Adjusted the font-weight property */
             font-size: 16px;
         }
-            
+        
         .cursor {
             width: 10px;
             height: 10px;
             border-radius: 50%;
             position: absolute;
         }
-            
+        
         .mode-button {
             background-color: #333;
             color: white;
@@ -174,12 +175,12 @@
             cursor: pointer;
             pointer-events: auto;
         }
-            
+        
         .mode-button.active {
             background-color: #b3b300;
         }
-                    
-                    /* Canvas container to control overflow and enable scrolling */
+        
+        /* Canvas container to control overflow and enable scrolling */
         .canvas-container {
             overflow: hidden;
             width: 100vw;
@@ -198,11 +199,11 @@
         .scroll-mode canvas {
             cursor: grab;
         }
-                    
+        
         .zoom-mode canvas {
             cursor: zoom-in;
         }
-            
+        
         .toggle-container {
             position: fixed;
             top: 35px; /* Adjust as needed */
@@ -211,7 +212,7 @@
             align-items: center; /* Ensure label, toggle, and icon are aligned */
             pointer-events: auto;
         }
-            
+        
         #infoIcon {
             margin-left: 5px; /* Space between label and icon */
             color: #555; /* Adjust color as needed */
@@ -221,28 +222,28 @@
         }
 
         .tooltip-text {
-                visibility: hidden;
-                width: auto; /* Let the width adjust based on content */
-                background-color: black;
-                color: #fff;
-                text-align: left;
-                border-radius: 6px;
-                padding: 5px 10px;
-                position: absolute;
-                z-index: 1;
-                left: 110%; /* Position to the right of the icon */
-                top: 50%;
-                transform: translateY(-50%);
-                white-space: nowrap; /* Prevent text from wrapping */
-                font-size: 12px; /* Smaller text size */
-                opacity: 0;
-                transition: opacity 0.3s;
-                pointer-events: auto;
-                -webkit-user-select: none; /* Disable text selection for webkit browsers */
-                -moz-user-select: none; /* Disable text selection for Mozilla Firefox */
-                -ms-user-select: none; /* Disable text selection for Internet Explorer/Edge */
-                user-select: none; /* Disable text selection for other browsers */
-                }
+            visibility: hidden;
+            width: auto; /* Let the width adjust based on content */
+            background-color: black;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 5px 10px;
+            position: absolute;
+            z-index: 1;
+            left: 110%; /* Position to the right of the icon */
+            top: 50%;
+            transform: translateY(-50%);
+            white-space: nowrap; /* Prevent text from wrapping */
+            font-size: 12px; /* Smaller text size */
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: auto;
+            -webkit-user-select: none; /* Disable text selection for webkit browsers */
+            -moz-user-select: none; /* Disable text selection for Mozilla Firefox */
+            -ms-user-select: none; /* Disable text selection for Internet Explorer/Edge */
+            user-select: none; /* Disable text selection for other browsers */
+        }
 
         #infoIcon:hover + .tooltip-text {
             visibility: visible;
@@ -253,13 +254,13 @@
 <body>
     
     <div id="modeButtons">
-        <button style="position: fixed; bottom: 75px; left: 47%; z-index: 100; display: flex;" class="mode-button active" onclick="setMode('draw')">
+        <button id="drawButton" onclick="setMode('draw')" style="position: fixed; bottom: 75px; left: 45%; z-index: 100; display: flex;" class="mode-button active">
             <i class="fas fa-pencil-alt"></i>
         </button>
-        <button style="position: fixed; bottom: 75px; left: calc(47% + 60px); z-index: 100; display: flex;" class="mode-button" onclick="setMode('scroll')">
+        <button id="scrollButton" onclick="setMode('scroll')" style="position: fixed; bottom: 75px; left: calc(45% + 60px); z-index: 100; display: flex;" class="mode-button">
             <i class="fas fa-hand-paper"></i>
         </button>
-        <button style="position: fixed; bottom: 75px; left: calc(47% + 120px); z-index: 100; display: hidden;" class="mode-button" onclick="setMode('erase')">
+        <button id="eraseButton" onclick="setMode('erase')" style="position: fixed; bottom: 75px; left: calc(45% + 120px); z-index: 100; display: flex;" class="mode-button">
             <i class="fas fa-eraser"></i>
         </button>
     </div>
@@ -290,9 +291,9 @@
         <label for="roomCode" style="color: #ffffff; font-size: 1.2em;">Enter Room Code:</label>
         <div style="display: flex; align-items: center; justify-content: center; flex-direction: column; margin-bottom: 20px;">
             <input id="roomCode" onkeyup="handleKeyUp(event)" style="padding: 8px; font-size: 1em; border: 1px solid #555555; border-radius: 3px; margin-bottom: 10px; display: flex;" />
-            <button onclick="joinRoom()" style="background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Join Room</button>
-            <button onclick="generateAndJoinRoom()" style="background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex; margin-top: 10px;">Generate Random Room</button>
-            <button onclick="joinRandomRoom()" style="background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex; margin-top: 10px;">Join Random Room</button>
+            <button id="joinRoomButton" style="background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Join Room</button>
+            <button id="generateRoomButton" style="background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex; margin-top: 10px;">Generate Random Room</button>
+            <button id="joinRandomRoomButton" style="background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex; margin-top: 10px;">Join Random Room</button>
         </div>
     </div>
     
@@ -302,21 +303,24 @@
         <input id="username" autocomplete="off" value="" maxlength="30" />
         <label for="color">Color:</label>
         <input id="color" type="color" value="#ffffff" />
-        <button id="updateSettings" onclick="updateSettings()">Join Room</button>
+        <button id="updateSettingsButton">Join Room</button>
     </div>
 
     <div id="activeUsersCount" style="position: fixed; top: 10px; left: 10px; color: #ffffff;"></div>
-    <button id="toggleChatButton" onclick="toggleChat()" style="position: fixed; top: 40px; left: 10px; margin-top: 35vh;">Toggle Chat</button>
+    <button id="toggleChatButton" style="position: fixed; top: 40px; left: 10px; margin-top: 35vh; z-index: 1;">Toggle Chat</button>
     
     <div id="messages" style="flex: 1; position: fixed; flex-direction: column; align-items: flex-start; margin-left: 0px; margin-top: -30px; left: 0%; top: 10%;">
     </div>
     
     <div id="clearCanvasContainer" style="position: fixed; top: 10px; left: 50%; transform: translateX(-50%);">
-            <button id="clearCanvasButton" onclick="clearCanvas()">Clear Canvas</button>
+            <button id="clearCanvasButton">Clear Canvas</button>
         </div>
     
-    <button id="saveCanvasButton" onclick="saveCanvasImage()" style="position: fixed; top: 10px; right: 10px; background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Save Image</button>
-    <button style="position: fixed; top: 50px; right: 10px; background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;" onclick="window.location.href='/'">Back to Menu</button>
+    <button id="saveCanvasButton" style="position: fixed; top: 10px; right: 10px; background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Save Image</button>
+    <button id="backToMenuButton" style="position: fixed; top: 50px; right: 10px; background-color: #4CAF50; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Back to Menu</button>
+    
+    <button id="undoButton" class="undoButton" style="position: fixed; bottom: 75px; left: 10px; background-color: #6772e5; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Undo</button>
+    <button id="redoButton" class="redoButton" style="position: fixed; bottom: 75px; left: 85px; background-color: #6772e5; color: #ffffff; font-size: 1em; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; display: flex;">Redo</button>
     
     <div class="toggle-container">
         <input type="checkbox" id="publicToggle"/>
@@ -330,982 +334,13 @@
     </form>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha384-ZCmVL/dTQHh41JxtZe73klDRFSJ/zixGCGt5lhnLQGjSWfAnlXSg+GSnRACaK5lc=" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-
-    <script>
-        const socket = io();
-
-        const room = window.location.pathname.slice(1);
-        let username = '';
-        let color = '';
-        let activeRooms = {};  // Initialize activeRooms as an empty object
-        let activeRoomsVar = [];  // Initialize activeRooms as an empty object
-        //const drawingHistory = {};
-        let lastPositions = {};
-        let drawingHistory = []; // Stores the drawing actions
-        let redoStack = []; // Stores actions for redo
-        let cursors = {}; // Object to track cursors of other users
-        
-        let lastServerX, lastServerY;
-        
-        function setCookie(name, value, days) {
-            const expires = new Date();
-            expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
-        }
-        
-        function getCookie(name) {
-            const keyValue = document.cookie.match(`(^|;) ?${name}=([^;]*)(;|$)`);
-            return keyValue ? keyValue[2] : null;
-        }
-
-        function joinRoom() {
-            const roomCode = $('#roomCode').val().trim();
-            if (roomCode) {
-                // Redirect to the room-specific URL
-                window.location.href = `/${roomCode}`;
-            }
-        }
-
-        function handleKeyUp(event) {
-            if (event.key === 'Enter') {
-                joinRoom();
-            }
-        }
-
-        // Check if there is a room code in the URL
-        const roomCodeInUrl = window.location.pathname.slice(1);
-        if (roomCodeInUrl) {
-            // Room code is present, show chat content
-            $('#content').show();
-            $('#landing').hide();
-            $('#toggleChatButton').hide();
-            $("#undoButton").hide();
-            $("#redoButton").hide();
-            $("#modeButtons").hide();
-            $('#m').hide();
-            $('#m-button').hide();
-            $('#clearCanvasButton').hide();
-            $('#publicToggle').hide();
-            $('#publicToggleLabel').hide();
-            $('#infoIcon').hide();
-            document.title = roomCodeInUrl;
-            
-            $('body').css('background-color', '#121212');
-
-            // Load username and color from cookies
-            const savedUsername = getCookie('username');
-            const savedColor = getCookie('color');
-
-            if (savedUsername) {
-                // Check if the saved username is "Guest"
-                if (savedUsername === "Guest") {
-                    // If the saved username is "Guest", set the input value to blank
-                    $('#username').val("");
-                } else {
-                    // If the saved username is not "Guest", set the input value to the saved username
-                    $('#username').val(savedUsername);
-                }
-            }
-
-            if (savedColor) {
-                $('#color').val(savedColor);
-            }
-
-            // Update settings with loaded values
-            // updateSettings();
-        } else {
-            // Room code is not present, show landing page
-            $('#landing').show();
-            $('#content').hide();
-            $("#canvas").hide();
-            $("#modeButtons").hide();
-            
-            $('body').css('background-color', '#121212');
-            $("#publicToggle").hide();
-            $("#publicToggleLabel").hide();
-            $("#infoIcon").hide();
-        }
-        // Enable message input and button after updating settings
-        const enableMessageInput = () => {
-            $('#form').prop('disabled', false);
-            $('form button').prop('disabled', false);
-        };
-        
-        // Function to handle restoring canvas data
-        const restoreCanvas = () => {
-            // Your logic for restoring canvas data goes here
-            // For example, you might want to emit the 'restoreCanvas' event to the server
-            // with the appropriate data, and handle it on the server-side
-            socket.emit('restoreCanvas', { ctx });
-        };
-
-        const updateSettings = () => {
-            username = $('#username').val() || 'Guest';
-            color = $('#color').val() || '#ffffff';
-
-            // Set cookies for username and color
-            setCookie('username', username, 365);
-            setCookie('color', color, 365);
-
-            // Emit user information to the server
-            socket.emit('join', { room, username, color });
-
-            // Call restoreCanvas immediately after emitting the join event
-            restoreCanvas();
-
-            // Hide settings
-            $('#settings').hide();
-            $('#canvas').show();
-            $('#modeButtons').show();
-            $('#toggleChatButton').show();
-            $('#undoButton').show();
-            $('#redoButton').show();
-            $('#m').show();
-            $('#m-button').show();
-            $('#clearCanvasButton').show();
-            $('#publicToggle').show();
-            $('#publicToggleLabel').show();
-            $('#infoIcon').show();
-            
-            $('#messages').width("400px");
-            $('#messages').css('padding', '10px');
-            
-            $('body').css('background-color', '#0d0d0d');
-            
-            // Enable message input and button
-            enableMessageInput();
-        };
-
-        const sendMessage = (messageType, data) => {
-            // Include username and color in the message data
-            socket.emit(messageType, { room, username, color, ...data });
-
-            // Clear the input field
-            $('#m').val('');
-        };
-
-        $('form').submit(function () {
-            sendMessage('message', { message: $('#m').val().trim() });
-            return false;
-        });
-
-        // Event listener for the Enter key press in the username input
-        $('#username').on('keyup', function (event) {
-            if (event.key === 'Enter') {
-                updateSettings();
-            }
-        });
-
-        socket.on('message', function (data) {
-            // Display messages with usernames and colors
-            const message = `<span style="color: ${data.color}">${data.username}:</span> ${data.message}`;
-            appendMessage(message);
-        });
-
-        // Add this block to your existing script
-        let canvas, ctx, drawing, lastX, lastY;
-
-        $(document).ready(function () {
-            // Get the canvas and its 2d context
-            canvas = document.getElementById('canvas');
-            ctx = canvas.getContext('2d');
-            
-            canvas.width = 2500;
-            canvas.height = 1600;
-
-            // Initialize drawing variables
-            drawing = false;
-            lastX = 0;
-            lastY = 0;
-            
-            // Set up pointer event properties for the chatbox
-            const chatbox = document.getElementById('messages');
-            chatbox.style.pointerEvents = 'none'; // Ensure the chatbox can be interacted with
-
-            // Disable drawing when the mouse is over the chatbox
-            chatbox.addEventListener('mouseenter', function() {
-                chatbox.style.pointerEvents = 'none';  // Disable drawing when hovering over the chatbox
-            });
-
-            // Enable drawing when the mouse leaves the chatbox
-            chatbox.addEventListener('mouseleave', function() {
-                chatbox.style.pointerEvents = 'none';  // Re-enable drawing when not hovering over the chatbox
-            });
-
-            // Detect mouse wheel event on the chatbox to handle scroll without affecting drawing
-            chatbox.addEventListener('scroll', function(event) {
-                chatbox.style.pointerEvents = 'auto';
-            });
-            
-            // Detect mouse wheel event on the chatbox to handle scroll without affecting drawing
-            canvas.addEventListener('mousedown', function(event) {
-                chatbox.style.pointerEvents = 'none';
-            });
-
-            // Add mouse event listeners to the canvas
-            document.addEventListener('mousedown', function(event) {
-                if (isInsideCanvas(event.clientX, event.clientY)) {
-                    startDrawing(event);
-                }
-            });
-
-            // Add mouse event listeners to the canvas
-            document.addEventListener('mousedown', function(event) {
-                if (isInsideCanvas(event.clientX, event.clientY)) {
-                    startDrawing(event);
-                }
-            });
-
-            document.addEventListener('mousemove', function(event) {
-                if (isInsideCanvas(event.clientX, event.clientY) && drawing) {
-                    draw(event);
-                }
-            });
-
-            document.addEventListener('mouseup', function(event) {
-                stopDrawing(event);
-            });
-            canvas.addEventListener('mouseout', stopDrawing);
-            
-            canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-            canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-            canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
-            canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
-            
-            canvas.addEventListener('mousemove', (event) => {
-                const rect = canvas.getBoundingClientRect();
-                const x = event.clientX - rect.left;
-                const y = event.clientY - rect.top;
-                socket.emit('cursorMove', { room, userId: socket.id, position: { x, y } });
-            });
-            
-            toggleChat();
-        });
-        
-        // Function to check if the given x, y coordinates are inside the canvas
-        function isInsideCanvas(clientX, clientY) {
-            const rect = canvas.getBoundingClientRect();
-            return (
-                clientX >= rect.left &&
-                clientX <= rect.right &&
-                clientY >= rect.top &&
-                clientY <= rect.bottom
-            );
-        }
-        
-        function setDrawingActive(isActive) {
-            if (isActive) {
-                canvas.style.pointerEvents = 'auto';  // Enable drawing interactions
-            } else {
-                canvas.style.pointerEvents = 'none';  // Allow clicks to pass through to elements below
-            }
-        }
-        
-        let mode = 'draw'; // Default mode
-
-        // Modify the startDrawing function
-        function startDrawing(e) {
-            if (mode !== 'draw' && mode !== 'erase') return;
-            const rect = canvas.getBoundingClientRect();
-            drawing = true;
-            lastX = e.clientX - rect.left;
-            lastY = e.clientY - rect.top;
-
-            // Update the last position at the start of a new line specifically for the current user
-            lastPositions[socket.id] = { x: lastX, y: lastY };
-
-            // Emit the 'drawingStart' event with room and start coordinates
-            socket.emit('drawingStart', { room, startX: lastX, startY: lastY, userId: socket.id, mode });
-        }
-
-        function draw(e) {
-            if (!drawing) return;
-
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            ctx.globalCompositeOperation = mode === 'erase' ? 'destination-out' : 'source-over';
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(x, y);
-            ctx.strokeStyle = color; // Ensure the current color is used
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            lastX = x;
-            lastY = y;
-
-            // Emit the current drawing action with the correct color
-            socket.emit('drawing', { room, x, y, color, mode });
-        }
-        
-            // Modify the stopDrawing function
-            function stopDrawing() {
-                if (mode !== 'draw' && mode !== 'erase') return;
-                if (!drawing) return;
-                drawing = false;
-
-                // Clear the drawing history for the current user when drawing stops
-                delete drawingHistory[username];
-
-                // Emit the 'drawingEnd' event with room information
-                if (drawing) {
-                    socket.emit('drawingEnd', { room, userId: socket.id });
-                    drawing = false;
-                }
-            }
-        
-        // Variables to store touch start coordinates
-        let touchStartX, touchStartY;
-
-        function handleTouchStart(e) {
-            if (mode !== 'draw' && mode !== 'erase') return;
-            e.preventDefault(); // Prevent scrolling and other touch behaviors
-            const touch = e.touches[0];
-            const rect = canvas.getBoundingClientRect();
-            drawing = true;
-            lastX = touch.clientX - rect.left;
-            lastY = touch.clientY - rect.top;
-
-            // Emit the 'drawingStart' with appropriate mode
-            socket.emit('drawingStart', { room, startX: lastX, startY: lastY, userId: socket.id, mode });
-
-            // Initialize last positions for correct drawing continuation
-            lastPositions[socket.id] = { x: lastX, y: lastY };
-        }
-
-        function handleTouchMove(e) {
-            if (!drawing) return;
-            if (mode !== 'draw' && mode !== 'erase') return;
-            e.preventDefault(); // Prevent scrolling and other touch behaviors
-            const touch = e.touches[0];
-            const rect = canvas.getBoundingClientRect();
-            const x = touch.clientX - rect.left;
-            const y = touch.clientY - rect.top;
-
-            // Drawing or erasing based on the mode
-            if (mode === 'erase') {
-                ctx.globalCompositeOperation = 'destination-out'; // Set to erase
-                ctx.beginPath();
-                ctx.arc(x, y, 15, 0, 2 * Math.PI); // Erase with a circle
-                ctx.fill();
-            } else {
-                ctx.globalCompositeOperation = 'source-over'; // Set to draw
-                ctx.beginPath();
-                ctx.moveTo(lastX, lastY);
-                ctx.lineTo(x, y);
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 2;
-                ctx.stroke();
-            }
-
-            // Update positions
-            lastX = x;
-            lastY = y;
-
-            // Emit the drawing data
-            socket.emit('drawing', { room, x, y, color, mode });
-        }
-
-        function handleTouchEnd(e) {
-            if (!drawing) return;
-            if (mode !== 'draw' && mode !== 'erase') return;
-            e.preventDefault(); // Prevent additional touch end behaviors
-            drawing = false;
-
-            // Emit the drawingEnd event
-            socket.emit('drawingEnd', { room, userId: socket.id });
-            lastPositions[socket.id] = null; // Clear last positions
-        }
-        
-        function handleGlobalTouchStart(e) {
-            if (isInsideCanvas(e.touches[0].clientX, e.touches[0].clientY)) {
-                handleTouchStart(e);
-                e.preventDefault(); // Only call this if the touch starts inside the canvas
-                e.stopPropagation(); // Prevent the event from bubbling up
-            }
-        }
-
-        function handleGlobalTouchMove(e) {
-            if (drawing && isInsideCanvas(e.touches[0].clientX, e.touches[0].clientY)) {
-                handleTouchMove(e);
-                e.preventDefault(); // Prevent default only if drawing is active
-            }
-        }
-
-        function handleGlobalTouchEnd(e) {
-            if (drawing) {
-                handleTouchEnd(e);
-                e.preventDefault(); // Prevent default only if a drawing operation was ongoing
-            }
-        }
-
-        function continueDrawingAtCanvasEdgeTouch(touch) {
-            // Calculate touch position at the edge if needed and continue drawing
-            const rect = canvas.getBoundingClientRect();
-            let x = touch.clientX - rect.left;
-            let y = touch.clientY - rect.top;
-
-            // Clamp x and y to canvas boundaries
-            x = Math.min(Math.max(x, 0), rect.width);
-            y = Math.min(Math.max(y, 0), rect.height);
-
-            // Continue drawing logic here if applicable
-        }
-        
-        // Function to clear drawing history when the canvas is cleared
-        function clearCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Clear drawing history for all users
-            for (const user in drawingHistory) {
-                delete drawingHistory[user];
-            }
-
-            sendMessage('clearCanvas', {});
-        }
-
-        // Function to append messages and drawings to the messages container
-        function appendMessage(message) {
-            // Append the new message
-            const newMessage = $('<li>').html(message);
-            const messagesContainer = $('#messages');
-
-            // Append the new message and remove the oldest if needed
-            messagesContainer.append(newMessage);
-
-            // Scroll messages up when a new message is added
-            messagesContainer.scrollTop(messagesContainer.prop('scrollHeight'));
-        }
-        
-        // Initialize an object to hold drawing histories for each user
-        let userDrawingHistories = {};
-
-        function drawFromServer(data) {
-            const userId = data.userId; // Unique identifier for the user
-
-            // Ensure userDrawingHistories is properly initialized for this user
-            if (!userDrawingHistories[userId]) {
-                userDrawingHistories[userId] = [];
-            }
-
-            const userHistory = userDrawingHistories[userId];
-
-            // Guard against attempting to access or modify a path before it's initialized
-            if (data.isStart) {
-                // Initialize a new path at the start
-                userHistory.push([{ x: data.x, y: data.y }]);
-            } else {
-                // Ensure there's at least one path initialized before trying to add points or mark the end
-                if (userHistory.length === 0) {
-                    // Optionally handle the error, e.g., by initializing a path or logging a warning
-                    // console.warn("Attempting to draw or end a line before starting it. Initializing a new path.");
-                    userHistory.push([{ x: data.x, y: data.y }]); // Initialize a path if desired
-                } else {
-                    // Normal operation for adding points to the existing path or marking its end
-                    if (data.isEnd) {
-                        userHistory[userHistory.length - 1].push({ x: data.x, y: data.y });
-                        // console.log("This is the end.");
-                    } else {
-                        userHistory[userHistory.length - 1].push({ x: data.x, y: data.y });
-
-                        // Draw the line segment
-                        const lastPoint = userHistory[userHistory.length - 1].slice(-2);
-                        ctx.beginPath();
-                        ctx.moveTo(lastPoint[0].x, lastPoint[0].y);
-                        ctx.lineTo(lastPoint[1].x, lastPoint[1].y);
-                        ctx.strokeStyle = data.color;
-                        ctx.lineWidth = 2;
-                        ctx.stroke();
-                    }
-                }
-            }
-        }
-
-        socket.on('drawingStart', (data) => {
-            const { userId, startX, startY, mode, color } = data;
-
-            if (!userDrawingHistories[userId]) {
-                userDrawingHistories[userId] = [];
-            }
-
-            userDrawingHistories[userId].push([{ x: startX, y: startY, mode, color }]);
-
-            // Initialize last positions for other users when they start drawing
-            lastPositions[userId] = { x: startX, y: startY };
-        });
-
-        socket.on('drawing', (data) => {
-            const { userId, x, y, color, mode } = data;
-
-            if (!userDrawingHistories[userId]) {
-                userDrawingHistories[userId] = [];
-            }
-
-            userDrawingHistories[userId][userDrawingHistories[userId].length - 1].push({ x, y, mode, color });
-
-            // Draw the line segment with correct globalCompositeOperation based on mode
-            ctx.globalCompositeOperation = mode === 'erase' ? 'destination-out' : 'source-over';
-            const lastPoint = userDrawingHistories[userId][userDrawingHistories[userId].length - 1].slice(-2);
-            ctx.beginPath();
-            ctx.moveTo(lastPoint[0].x, lastPoint[0].y);
-            ctx.lineTo(lastPoint[1].x, lastPoint[1].y);
-            ctx.strokeStyle = color;
-            ctx.lineWidth = mode === 'erase' ? 10 : 2; // Adjust line width for erasing and drawing
-            ctx.stroke();
-
-            // Update last known positions for the user
-            lastPositions[userId] = { x, y };
-        });
-
-        socket.on('drawingEnd', (data) => {
-            const { userId } = data;
-
-            if (!userDrawingHistories[userId]) {
-                userDrawingHistories[userId] = [];
-            }
-
-            userDrawingHistories[userId].push([]);
-
-            delete lastPositions[userId];
-        });
-
-        socket.on('clearCanvas', function () {
-            // Clear the canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        });
-
-        // Modify the socket.on('userJoin') function to check if the user is the least-recently-joined user
-        socket.on('userJoin', function (data) {
-            // Increment the user count for the joined room
-            activeRooms[data.room] = (activeRooms[data.room] || 0) + 1;
-
-            // Emit the updated user count to all clients in the room
-            io.to(data.room).emit('activeUsersCount', { room: data.room, count: activeRooms[data.room] });
-
-            // Store the timestamp of the most recent user join event
-            const currentTime = new Date().getTime();
-            if (currentTime > mostRecentUserJoinTimestamp) {
-                mostRecentUserJoinTimestamp = currentTime;
-                mostRecentUser = data.username;
-                isLeastRecentUser = true; // Update the variable to indicate that the user is the least-recently-joined user
-            } else {
-                isLeastRecentUser = false; // Reset the variable if the user is not the least-recently-joined user
-            }
-
-            // Check if there were previously no users in the room
-            if (activeRooms[data.room] === 1) {
-                isFirstUser = true;
-                // Send a message to the chat box indicating that this is the first user
-                io.to(data.room).emit('message', {
-                    username: 'System',
-                    color: '#ffffff',
-                    message: `${data.username} is the first user in the room.`
-                });
-            }
-        });
-        
-        socket.on('userLeave', function (data) {
-            // Decrement the user count for the left room
-            if (activeRooms[data.room] > 0) {
-                activeRooms[data.room]--;
-
-                // Emit the updated user count to all clients in the room
-                io.to(data.room).emit('activeUsersCount', { room: data.room, count: activeRooms[data.room] });
-
-                // Check if the leaving user is the first user
-                if (data.username === mostRecentUser) {
-                    // Find the new earliest join timestamp and corresponding username
-                    let earliestJoinTimestamp = Infinity;
-                    let newFirstUser = '';
-                    for (const [user, joinTime] of Object.entries(activeUsers)) {
-                        if (joinTime < earliestJoinTimestamp) {
-                            earliestJoinTimestamp = joinTime;
-                            newFirstUser = user;
-                        }
-                    }
-                    
-                    const cursor = document.getElementById(`cursor-${data.userId}`);
-                    
-                    if (cursor) {
-                        cursor.parentNode.removeChild(cursor); // Remove the cursor element from the DOM
-                    }
-                    
-                    // Update the first user's information
-                    firstUserJoinTimestamp = earliestJoinTimestamp;
-                    firstUser = newFirstUser;
-
-                    // Print the updated result
-                    console.log(`The first person to join the room is now: ${firstUser}`);
-                }
-            }
-
-            // Check if there are no users left in the room
-            if (activeRooms[data.room] === 0) {
-                // Clear the first user information
-                firstUserJoinTimestamp = 0;
-                firstUser = '';
-
-                // Print a message indicating that there are no users in the room
-                console.log('No users left in the room.');
-            }
-        });
-    
-    // Add this block to your existing script
-    socket.on('activeRooms', function (data) {
-        activeRooms = data.activeRooms; // Update the local activeRooms variable.
-        activeRoomsVar = activeRooms;
-    });
-        
-        socket.on('connection', function (socket) {
-            // Broadcast active user count to the new user
-            socket.on('activeUsersCount', function (data) {
-                io.to(socket.id).emit('activeUsersCount', { room: data.room, count: activeRooms[data.room] });
-            });
-        });
-
-        // Function to get the list of active rooms
-        function getActiveRooms() {
-            const activeRoomList = Object.keys(activeRooms).filter((room) => activeRooms[room] > 0);
-            return activeRoomList;
-        }
-
-        function joinRandomRoom() {
-            // Filter out private rooms and rooms with no active users
-            const publicRooms = Object.keys(activeRooms).filter(roomName => !activeRooms[roomName].isPrivate && activeRooms[roomName].count > 0);
-
-            if (publicRooms.length > 0) {
-                const randomRoomIndex = Math.floor(Math.random() * publicRooms.length);
-                const randomRoomName = publicRooms[randomRoomIndex];
-                
-                // Log for debugging
-                console.log('Random Room:', randomRoomName);
-
-                // Redirect to the selected room-specific URL
-                window.location.href = `/${randomRoomName}`;
-                
-                // Optionally emit an event if needed
-                socket.emit('joinRandomRoom', { room: randomRoomName });
-            } else {
-                alert("No available public rooms. Try creating a new one or wait for public rooms to become available.");
-            }
-        }
-        
-        //Function to save the canvas image
-        const saveCanvasImage = () => {
-            const canvas = document.getElementById('canvas');
-            const dataUrl = canvas.toDataURL(); // Get the data URL of the canvas image
-            const a = document.createElement('a');
-            a.href = dataUrl;
-            a.download = 'image.png';
-            a.click();
-        };
-        
-        function generateAndJoinRoom() {
-            const generatedRoomCode = generateRandomRoomCode();
-            window.location.href = `/${generatedRoomCode}`;
-        }
-
-        function generateRandomRoomCode() {
-            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            const codeLength = 6; // Adjust the length of the generated room code if needed
-            let roomCode = '';
-
-            do {
-                // Generate a random room code
-                roomCode = '';
-                for (let i = 0; i < codeLength; i++) {
-                    const randomIndex = Math.floor(Math.random() * characters.length);
-                    roomCode += characters.charAt(randomIndex);
-                }
-            } while (activeRooms.hasOwnProperty(roomCode)); // Check if the code already exists in activeRooms
-
-            return roomCode;
-        }
-        
-        socket.on('activeUsersCount', function (data) {
-               // Update the active user count in the UI
-               updateActiveUsersCount(data.count);
-           });
-        
-        socket.on('noAvailableRooms', function(data) {
-            alert(data.message);  // Alert the user that no rooms are available for joining
-        });
-
-        // Function to update the active user count in the UI
-        function updateActiveUsersCount(count) {
-            const activeUsersCountElement = $('#activeUsersCount');
-            activeUsersCountElement.text(`Active Users: ${count}`);
-        }
-        
-        function toggleChat() {
-            const messages = document.getElementById('messages');
-            const toggleChatButton = document.getElementById('toggleChatButton');
-
-            if (messages.style.display === 'none' || messages.style.display === '') {
-                messages.style.display = 'block';
-                toggleChatButton.style.marginTop = '35vh';
-                toggleChatButton.textContent = 'Close Chat'; // Change button text to "Close Chat"
-            } else {
-                messages.style.display = 'none';
-                toggleChatButton.style.marginTop = '5vh';
-                toggleChatButton.textContent = 'Open Chat'; // Change button text to "Open Chat"
-            }
-        }
-
-        // Function to show chat content and toggle button
-        function showChat() {
-            const content = document.getElementById('content');
-            const button = document.getElementById('toggleChatButton');
-
-            $('#m').show();
-                   
-            //button.style.display = 'block'; // Show the toggle button
-            button.textContent = 'Close Chat';
-        }
-
-        // Function to hide chat content and toggle button
-        function hideChat() {
-            const content = document.getElementById('content');
-            const button = document.getElementById('toggleChatButton');
-
-            $('#m').hide();
-        }
-        
-        // Redraw the canvas based on the current state of drawingHistory
-        function redrawCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
-            // Iterate over drawingHistory and redraw each action
-            drawingHistory.forEach(action => {
-                // Redrawing logic based on the action type
-                // For example, you might have action types like 'line' with start and end coordinates
-            });
-        }
-        
-        /*
-        socket.on('cursorMove', (data) => {
-            let cursor = cursors[data.userId];
-            if (!cursor) {
-                // Create a new cursor element if it doesn't exist
-                cursor = document.createElement('div');
-                cursor.classList.add('cursor');
-                cursor.setAttribute('id', `cursor-${data.userId}`);
-                cursor.style.position = 'absolute';
-                cursor.style.width = '10px';
-                cursor.style.height = '10px';
-                cursor.style.borderRadius = '50%'; // Makes the cursor a circle
-                cursor.style.pointerEvents = 'none'; // Ensures the cursor doesn't interfere with canvas drawing
-                document.body.appendChild(cursor);
-                cursors[data.userId] = cursor;
-            }
-
-            // Set the cursor's position relative to the canvas
-            cursor.style.left = `${data.position.x - cursor.offsetWidth / 2}px`;
-            cursor.style.top = `${data.position.y - cursor.offsetHeight / 2}px`;
-            
-            // Set the cursor's color
-            cursor.style.backgroundColor = data.color;
-        });
-         */
-        
-        function undo() {
-            socket.emit('undo', { room: room, userId: socket.id });
-        }
-
-        function redo() {
-            socket.emit('redo', { room: room, userId: socket.id });
-        }
-        
-        socket.on('undoAction', function(data) {
-            if (data.userId === socket.id) {
-                // Remove the action from the canvas
-                removeActionFromCanvas(data.actionToUndo);
-            }
-        });
-
-        socket.on('redoAction', function(data) {
-            if (data.userId === socket.id) {
-                // Reapply the action to the canvas
-                applyActionToCanvas(data.action);
-            }
-        });
-        
-        socket.on('undo', function(data) {
-            // Assuming drawingHistory is an array of drawing actions
-            // Remove the last action
-            drawingHistory.pop();
-
-            // Clear the canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Redraw all remaining actions
-            drawingHistory.forEach(function(action) {
-                // Redraw action here
-                redrawAction(action);
-            });
-        });
-
-        function redrawAction(action) {
-            // Assuming a simple line drawing action for the example
-            ctx.beginPath();
-            ctx.moveTo(action.startX, action.startY);
-            ctx.lineTo(action.x, action.y);
-            ctx.strokeStyle = action.color;
-            ctx.lineWidth = 2; // Example line width
-            ctx.stroke();
-        }
-        
-        function removeActionFromCanvas(action) {
-            // Since there's no way to remove a drawn line directly from a canvas,
-            // we need to redraw the canvas without the last action.
-            if (drawingHistory.length > 0) {
-                drawingHistory.pop();  // Remove the last action
-                redrawCanvas();        // Redraw the canvas without the last action
-            }
-        }
-
-        function redrawCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);  // Clear the canvas
-            drawingHistory.forEach(function(action) {
-                ctx.beginPath();
-                ctx.moveTo(action.startX, action.startY);
-                ctx.lineTo(action.endX, action.endY);
-                ctx.strokeStyle = action.color;
-                ctx.lineWidth = action.width;
-                ctx.stroke();
-            });
-        }
-        
-        function applyActionToCanvas(action) {
-            drawingHistory.push(action);  // Re-add the action to the history
-            ctx.beginPath();
-            ctx.moveTo(action.startX, action.startY);
-            ctx.lineTo(action.endX, action.endY);
-            ctx.strokeStyle = action.color;
-            ctx.lineWidth = action.width;
-            ctx.stroke();
-        }
-
-                // Implement scrolling functionality
-                document.querySelector('.canvas-container').addEventListener('mousedown', function(e) {
-                    
-                    if (mode === 'draw' || mode === 'erase') {
-                            e.preventDefault(); // Prevent the browser's default action to allow drawing
-                            draw(e.touches[0]); // Adapt draw function for touch events
-                    }
-                    
-                    if (mode !== 'scroll') return;
-                    const container = this;
-                    let startX = e.pageX - container.offsetLeft;
-                    let startY = e.pageY - container.offsetTop;
-                    let scrollLeft = container.scrollLeft;
-                    let scrollTop = container.scrollTop;
-
-                    function onMouseMove(e) {
-                        // Calculate the distance moved
-                        const dx = e.pageX - container.offsetLeft - startX;
-                        const dy = e.pageY - container.offsetTop - startY;
-                        container.scrollLeft = scrollLeft - dx;
-                        container.scrollTop = scrollTop - dy;
-                    }
-
-                    function onMouseUp() {
-                        document.removeEventListener('mousemove', onMouseMove);
-                        document.removeEventListener('mouseup', onMouseUp);
-                    }
-
-                    document.addEventListener('mousemove', onMouseMove);
-                    document.addEventListener('mouseup', onMouseUp);
-                },  { passive: false });
-
-                // Implement zoom functionality
-                document.getElementById('canvas').addEventListener('wheel', function(e) {
-                    if (mode !== 'zoom') return;
-                    e.preventDefault(); // Prevent the default scroll behavior
-                    const scaleAmount = e.deltaY * -0.01;
-                    // Apply zooming logic here, e.g., adjusting canvas size or using transform: scale(...)
-                });
-        
-        document.querySelector('.canvas-container').addEventListener('touchstart', function(e) {
-            if (mode !== 'scroll') return;  // Only allow scrolling in scroll mode
-            e.preventDefault();  // Prevent default touch behavior (scrolling, zooming)
-            
-            const container = this;
-            const touchStartX = e.touches[0].pageX - container.offsetLeft;
-            const touchStartY = e.touches[0].pageY - container.offsetTop;
-            let scrollLeft = container.scrollLeft;
-            let scrollTop = container.scrollTop;
-
-            function onTouchMove(e) {
-                e.preventDefault();  // Prevent default touch behavior (scrolling, zooming)
-                // Calculate the distance moved
-                const touchX = e.touches[0].pageX - container.offsetLeft;
-                const touchY = e.touches[0].pageY - container.offsetTop;
-                const dx = touchX - touchStartX;
-                const dy = touchY - touchStartY;
-                container.scrollLeft = scrollLeft - dx;
-                container.scrollTop = scrollTop - dy;
-            }
-
-            function onTouchEnd() {
-                document.removeEventListener('touchmove', onTouchMove);
-                document.removeEventListener('touchend', onTouchEnd);
-            }
-
-            document.addEventListener('touchmove', onTouchMove, { passive: false });
-            document.addEventListener('touchend', onTouchEnd, { passive: false });
-        }, { passive: false });
-
-        
-        function setMode(newMode) {
-            console.log("Setting mode to:", newMode);  // Debugging output
-            mode = newMode;
-
-            // Adjust canvas settings based on the mode
-            if (mode === 'draw') {
-                ctx.globalCompositeOperation = 'source-over';  // Default mode for drawing
-                ctx.lineWidth = 2;  // Set line width for drawing
-                canvas.style.cursor = 'crosshair';  // Set cursor for drawing
-            } else if (mode === 'erase') {
-                ctx.globalCompositeOperation = 'destination-out';  // Set to erase
-                ctx.lineWidth = 10;  // Set line width for eraser, usually larger
-                canvas.style.cursor = 'crosshair';  // Set cursor for erasing
-            } else if (mode === 'scroll') {
-                canvas.style.cursor = 'grab';
-            }
-
-            // Update UI button states
-            document.querySelectorAll('.mode-button').forEach(button => {
-                button.classList.remove('active');
-                if (button.getAttribute('onclick').includes(newMode)) {
-                    button.classList.add('active');
-                }
-            });
-        }
-        
-        /*
-        document.getElementById('publicToggle').addEventListener('change', function() {
-            const isPrivate = this.checked;
-            const room = window.location.pathname.slice(1); // Assuming the room code is in the URL
-            socket.emit('privacyToggle', { room, isPrivate });
-        });
-         */
-        
-        $('#publicToggle').on('change', function() {
-            const isPrivate = $(this).is(':checked');
-            socket.emit('privacyToggle', { room, isPrivate });
-        });
-
-        socket.on('updatePrivacy', function(data) {
-            const { isPrivate } = data;
-            $('#publicToggle').prop('checked', isPrivate);
-        });
-    </script>
+    <script src="/paint.js" defer></script>
 </body>
 </html>
+
+
 
 
