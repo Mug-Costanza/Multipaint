@@ -15,9 +15,6 @@ Visit the site here: https://www.multipaint.net
     3. An educational tool
     4. An entertaining social / online experiment
 
-## Future Features That I Will Add One Day
-* Undo / Redo Button
-
 ## Development Tools
 * React
 * Node.js
