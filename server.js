@@ -86,13 +86,15 @@ io.on('connection', (socket) => {
             activeRooms[room].count++;
 
             if (!roomCanvases[room]) {
-                roomCanvases[room] = [];
+                roomCanvases[room] = {};
             }
 
             if (roomCanvases[room]) {
-                roomCanvases[room].forEach(item => {
-                    socket.emit(item.type, { ...item.data, userId: item.userId });
-                });
+                for (let userId in roomCanvases[room]) {
+                    roomCanvases[room][userId].forEach(item => {
+                        socket.emit(item.type, { ...item.data, userId: item.userId });
+                    });
+                }
             }
 
             if (chatMessages[data.room]) {
@@ -153,11 +155,15 @@ io.on('connection', (socket) => {
             }
 
             if (!roomCanvases[room]) {
-                roomCanvases[room] = [];
+                roomCanvases[room] = {};
+            }
+
+            if (!roomCanvases[room][socket.id]) {
+                roomCanvases[room][socket.id] = [];
             }
 
             const action = { userId: socket.id, type: 'drawingStart', data: { startX, startY, mode, color } };
-            roomCanvases[room].push(action);
+            roomCanvases[room][socket.id].push(action);
             userDrawingHistory[socket.id].push([action]); // Initialize a new action array
 
             // Clear redo stack on new action
@@ -180,13 +186,17 @@ io.on('connection', (socket) => {
         }
 
         if (!roomCanvases[room]) {
-            roomCanvases[room] = [];
+            roomCanvases[room] = {};
+        }
+
+        if (!roomCanvases[room][socket.id]) {
+            roomCanvases[room][socket.id] = [];
         }
 
         drawingStates[room][socket.id].path.push({ x, y });
 
         const action = { userId: socket.id, type: 'drawing', data: { x, y, color, mode } };
-        roomCanvases[room].push(action);
+        roomCanvases[room][socket.id].push(action);
         userDrawingHistory[socket.id][userDrawingHistory[socket.id].length - 1].push(action); // Add to the current action
 
         io.to(room).emit('drawing', { userId: socket.id, x, y, color, mode });
@@ -200,13 +210,17 @@ io.on('connection', (socket) => {
         }
 
         if (!roomCanvases[room]) {
-            roomCanvases[room] = [];
+            roomCanvases[room] = {};
+        }
+
+        if (!roomCanvases[room][socket.id]) {
+            roomCanvases[room][socket.id] = [];
         }
 
         drawingStates[room][socket.id].drawing = false;
 
         const action = { userId: socket.id, type: 'drawingEnd' };
-        roomCanvases[room].push(action);
+        roomCanvases[room][socket.id].push(action);
         userDrawingHistory[socket.id][userDrawingHistory[socket.id].length - 1].push(action); // Add to the current action
 
         io.to(room).emit('drawingEnd', { userId: socket.id });
@@ -218,7 +232,7 @@ io.on('connection', (socket) => {
 
     socket.on('clearCanvas', (data) => {
         const { room } = data;
-        roomCanvases[room] = [];
+        roomCanvases[room] = {};
         io.to(room).emit('clearCanvas');
     });
 
@@ -232,9 +246,11 @@ io.on('connection', (socket) => {
     socket.on('restoreCanvas', (data) => {
         const { room } = data;
         if (roomCanvases[room]) {
-            roomCanvases[room].forEach((userDrawing) => {
-                socket.emit(userDrawing.type, userDrawing.data);
-            });
+            for (let userId in roomCanvases[room]) {
+                roomCanvases[room][userId].forEach((action) => {
+                    socket.emit(action.type, { ...action.data, userId: action.userId });
+                });
+            }
         }
     });
 
@@ -284,7 +300,7 @@ io.on('connection', (socket) => {
 
                 if (activeRooms[user.room].count <= 0) {
                     delete activeRooms[user.room];
-                    roomCanvases[user.room] = [];
+                    roomCanvases[user.room] = {};
                     chatMessages[user.room] = [];
                 } else {
                     io.to(user.room).emit('message', {
@@ -328,14 +344,14 @@ io.on('connection', (socket) => {
 
                // Remove the actions from the room canvas
                actions.forEach(action => {
-                   const index = roomCanvases[room].indexOf(action);
+                   const index = roomCanvases[room][socket.id].indexOf(action);
                    if (index !== -1) {
-                       roomCanvases[room].splice(index, 1);
+                       roomCanvases[room][socket.id].splice(index, 1);
                    }
                });
 
                // Broadcast the new canvas state to the room
-               io.to(room).emit('updateCanvas', { drawingHistory: roomCanvases[room] });
+               io.to(room).emit('updateCanvas', { roomCanvases: roomCanvases[room] });
            }
        });
 
@@ -350,11 +366,11 @@ io.on('connection', (socket) => {
 
                // Add the actions back to the room canvas
                actions.forEach(action => {
-                   roomCanvases[room].push(action);
+                   roomCanvases[room][socket.id].push(action);
                });
 
                // Broadcast the new canvas state to the room
-               io.to(room).emit('updateCanvas', { drawingHistory: roomCanvases[room] });
+               io.to(room).emit('updateCanvas', { roomCanvases: roomCanvases[room] });
            }
        });
 });
@@ -363,5 +379,3 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
-
-
