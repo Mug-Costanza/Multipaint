@@ -444,12 +444,6 @@ function drawFromServer(data) {
 }
 
 socket.on('drawingStart', (data) => {
-    drawingHistory.push({
-        line: [{ x: data.startX, y: data.startY }],
-        color: data.color,
-        mode: data.mode,
-        userId: data.userId
-    });
     const { userId, startX, startY, mode, color } = data;
 
     if (!userDrawingHistories[userId]) {
@@ -462,9 +456,6 @@ socket.on('drawingStart', (data) => {
 });
 
 socket.on('drawing', (data) => {
-    const currentLine = drawingHistory[drawingHistory.length - 1].line;
-    currentLine.push({ x: data.x, y: data.y });
-
     const { userId, x, y, color, mode } = data;
 
     if (!userDrawingHistories[userId]) {
@@ -733,19 +724,6 @@ document.getElementById('canvas').addEventListener('wheel', function(e) {
     const scaleAmount = e.deltaY * -0.01;
 });
 
-// Listen for keyboard shortcuts
-document.addEventListener('keydown', (event) => {
-    if (event.ctrlKey && event.key === 'z') {
-        event.preventDefault();
-        undo();
-    }
-
-    if (event.ctrlKey && event.key === 'y') {
-        event.preventDefault();
-        redo();
-    }
-});
-
 // Clear canvas event
 socket.on('clearCanvas', function () {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -828,26 +806,28 @@ socket.on('redo', (data) => {
 });
 
 socket.on('updateCanvas', (data) => {
-    redrawCanvas(data.drawingHistory);
+    redrawCanvas(data.roomCanvases);
 });
 
-function redrawCanvas(drawingHistory) {
+function redrawCanvas(roomCanvases) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    drawingHistory.forEach(action => {
-        if (action.type === 'drawingStart') {
-            ctx.beginPath();
-            ctx.moveTo(action.data.startX, action.data.startY);
-        } else if (action.type === 'drawing') {
-            ctx.lineTo(action.data.x, action.data.y);
-            ctx.strokeStyle = action.data.color;
-            ctx.lineWidth = action.data.mode === 'erase' ? 10 : 2;
-            ctx.globalCompositeOperation = action.data.mode === 'erase' ? 'destination-out' : 'source-over';
-            ctx.stroke();
-        } else if (action.type === 'drawingEnd') {
-            ctx.closePath();
-        }
-    });
+    for (let userId in roomCanvases) {
+        roomCanvases[userId].forEach(action => {
+            if (action.type === 'drawingStart') {
+                ctx.beginPath();
+                ctx.moveTo(action.data.startX, action.data.startY);
+            } else if (action.type === 'drawing') {
+                ctx.lineTo(action.data.x, action.data.y);
+                ctx.strokeStyle = action.data.color;
+                ctx.lineWidth = action.data.mode === 'erase' ? 10 : 2;
+                ctx.globalCompositeOperation = action.data.mode === 'erase' ? 'destination-out' : 'source-over';
+                ctx.stroke();
+            } else if (action.type === 'drawingEnd') {
+                ctx.closePath();
+            }
+        });
+    }
 }
 
 // Add the following code to disable drawing when mode or undo/redo buttons are pressed
@@ -902,4 +882,3 @@ document.addEventListener('keydown', (event) => {
         }
     }
 });
-
