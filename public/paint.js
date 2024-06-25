@@ -873,3 +873,33 @@ actionButtons.forEach(button => {
         setDrawingActive(true);
     });
 });
+
+document.addEventListener('keydown', (event) => {
+    if (event.ctrlKey) {
+        switch (event.key.toLowerCase()) {
+            case 'e':
+                event.preventDefault();
+                setMode('draw');
+                break;
+            case 'r':
+                event.preventDefault();
+                setMode('scroll');
+                break;
+            case 't':
+                event.preventDefault();
+                setMode('erase');
+                break;
+            case 'z':
+                if (!event.shiftKey) {
+                    event.preventDefault();
+                    undo();
+                }
+                break;
+            case 'y':
+                event.preventDefault();
+                redo();
+                break;
+        }
+    }
+});
+
